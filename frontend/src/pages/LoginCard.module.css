@@ -1,0 +1,44 @@
+
+.card {
+  @apply bg-white dark:bg-[#1b2327] border border-gray-200 dark:border-[#3b4c54] rounded-xl p-8 shadow-xl;
+}
+
+.header {
+  @apply flex flex-col gap-3;
+}
+
+.githubButton {
+    @apply flex w-full cursor-pointer items-center justify-center rounded-lg h-12 px-5 bg-[#24292e] hover:bg-[#1b1f23] text-white gap-3 text-base font-bold transition-all;
+}
+
+.Divider {
+    @apply relative flex py-5 items-center;
+}
+
+.title {
+  @apply text-black dark:text-white tracking-tight text-[32px] font-extrabold leading-tight text-center;
+}
+
+.subtitle {
+  @apply text-gray-500 dark:text-[#9cb0ba] text-sm font-normal leading-normal text-center mt-2;
+}
+
+.form {
+  @apply flex flex-col gap-4;
+}
+
+.inputGroup {
+  @apply flex flex-col gap-2;
+}
+
+.label {
+  @apply text-gray-900 dark:text-white text-sm font-semibold leading-normal;
+}
+
+.input {
+  @apply flex w-full rounded-lg h-12 pl-10 pr-4 border border-gray-200 bg-gray-50 dark:bg-gray-800 dark:border-gray-700 dark:text-white;
+}
+
+.button {
+  @apply flex w-full cursor-pointer items-center justify-center rounded-lg h-12 px-5 bg-primary text-white text-base font-bold transition-all hover:brightness-110 shadow-lg shadow-primary/20 mt-2;
+}
