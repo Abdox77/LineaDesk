@@ -26,3 +26,6 @@ coverage/
 
 frontend/src/pages/login.html
 react.md
+architecture/
+backend/notes/*
+backend/.idea
