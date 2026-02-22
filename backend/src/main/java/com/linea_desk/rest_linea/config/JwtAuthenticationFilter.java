@@ -2,11 +2,14 @@ package com.linea_desk.rest_linea.config;
 
 
 import org.jspecify.annotations.NullMarked;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+
 import com.linea_desk.rest_linea.common.service.JwtService;
+
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
@@ -19,12 +22,20 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 
 import java.io.IOException;
+import lombok.extern.log4j.Log4j2;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
+import org.hibernate.validator.internal.util.stereotypes.Lazy;
+
+
+@Log4j2
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-    private final JwtService jwtService;
-    private final UserDetailsService userDetailsService;
+    @Lazy private final JwtService jwtService;
+    @Lazy private final UserDetailsService userDetailsService;
     private final HandlerExceptionResolver handlerExceptionResolver;
+    private static final Logger log = LogManager.getLogger(JwtAuthenticationFilter.class);
 
     public JwtAuthenticationFilter(
         JwtService jwtService,
@@ -46,7 +57,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     )  throws ServletException, IOException {
         final String authHeader = request.getHeader("Authorization");
 
-        if(authHeader == null || !authHeader.startsWith("Beader "))
+        if(authHeader == null || !authHeader.startsWith("Bearer "))
         {
             filterChain.doFilter(request, response);
             return;
@@ -62,7 +73,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 {
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                         userDetails,
-                        null, 
+                        null,
                         userDetails.getAuthorities()
                     );
 
@@ -71,9 +82,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
             }
 
-            filterChain.doFilter(request, response);
         } catch (Exception exception) {
+            log.error("Cannot set user authentication: {}", exception.getMessage());
             handlerExceptionResolver.resolveException(request, response, null, exception);
         }
+        
+        filterChain.doFilter(request, response);
     }
 }

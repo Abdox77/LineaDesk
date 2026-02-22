@@ -27,7 +27,7 @@ public class SecurityConfiguration {
 
     public SecurityConfiguration(
         @Lazy AuthenticationProvider authenticationProvider, 
-        JwtAuthenticationFilter jwtAuthenticationFilter
+        @Lazy JwtAuthenticationFilter jwtAuthenticationFilter
     ) {
 
         this.authenticationProvider = authenticationProvider; 
