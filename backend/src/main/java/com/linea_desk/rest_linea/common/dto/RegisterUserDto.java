@@ -1,5 +1,7 @@
 package com.linea_desk.rest_linea.common.dto;
 
+
+
 import jakarta.validation.constraints.*;
 
 public class RegisterUserDto {

@@ -2,21 +2,22 @@ package com.linea_desk.rest_linea.common.service;
 
 
 import java.util.Optional;
-import org.springframework.stereotype.Service;
+
+import lombok.extern.log4j.Log4j2;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
 import com.linea_desk.rest_linea.User.User;
-import com.linea_desk.rest_linea.common.dto.LoginUserDto;
-import com.linea_desk.rest_linea.common.dto.RegisterUserDto;
 import com.linea_desk.rest_linea.User.UserRepository;
 import com.linea_desk.rest_linea.User.UserResponseDto;
+import com.linea_desk.rest_linea.common.dto.LoginUserDto;
+import com.linea_desk.rest_linea.common.dto.RegisterUserDto;
 
-import lombok.extern.log4j.Log4j2;
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.LogManager;
-
-// @Log4j2
+@Log4j2
 @Service
 public class AuthenticationService {
     private final UserRepository userRepository;

@@ -6,18 +6,21 @@ import java.util.List;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import com.linea_desk.rest_linea.Project.Project;
+
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-
 
 @Entity
 @Table(name="Users")
@@ -45,6 +48,9 @@ public class User implements UserDetails {
     @Column(length = 128)
     private String githubUrl;
 
+    @OneToMany(mappedBy="user", cascade=CascadeType.ALL)
+    private Collection<Project> projects;
+
     public User() { }
 
     public User(String email, String username)
@@ -68,7 +74,7 @@ public class User implements UserDetails {
         return githubUrl;
     }
 
-    public Long getId() {
+    public Long getUserId() {
         return id;
     }
 

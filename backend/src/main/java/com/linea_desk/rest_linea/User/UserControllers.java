@@ -27,7 +27,7 @@ import java.util.List;
 
 @Log4j2
 @RestController
-// @RequestMapping("/auth")
+@RequestMapping("/auth")
 public class UserControllers {
     private final JwtService jwtService;
     private final UserService userService;
@@ -45,7 +45,7 @@ public class UserControllers {
 
     }
 
-    @RequestMapping(path="/auth/login", method=POST)
+    @RequestMapping(path="/login", method=POST)
     public ResponseEntity<ApiResponse<?>> login(@RequestBody LoginUserDto loginUserDto)
     {
         ApiResponse<?> response;
@@ -68,7 +68,7 @@ public class UserControllers {
 
             LoginResponse loginResponse = new LoginResponse(
                                             jwtToken, 
-                                            user.getId(), 
+                                            user.getUserId(), 
                                             user.getUsername(),
                                             user.getDisplayName()
                                         );
@@ -91,7 +91,7 @@ public class UserControllers {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @RequestMapping(path="/auth/signup", method=POST)
+    @RequestMapping(path="/signup", method=POST)
     public ResponseEntity<ApiResponse<?>> signup(@RequestBody RegisterUserDto registerUserDto)
     {
         try {
@@ -119,13 +119,5 @@ public class UserControllers {
         }
     }
 
-    
-    @GetMapping("/users")
-    public ResponseEntity<List<User>> allUsers() {
-        List <User> users = userService.allUsers();
-
-        return ResponseEntity.ok(users);
-    }
-    
 
 }

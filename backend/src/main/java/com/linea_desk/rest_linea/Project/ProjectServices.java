@@ -1,0 +1,52 @@
+package com.linea_desk.rest_linea.Project;
+
+import java.util.Optional;
+import lombok.extern.log4j.Log4j2;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.springframework.stereotype.Service;
+
+import com.linea_desk.rest_linea.User.User;
+
+@Log4j2
+@Service
+public class ProjectServices {
+    private final ProjectRepository projectRepository;
+    private static final Logger log = LogManager.getLogger(ProjectServices.class);
+
+    public ProjectServices(ProjectRepository projectRepository) {
+        this.projectRepository = projectRepository;
+    }
+
+    public Optional<ProjectResponseDto> createNewProject(ProjectRequestDto req, User user) {
+        Project project = new Project();
+
+        /*
+            here i should check for whether the project exists or not
+            and i should throw customized exception
+
+        */
+
+        project.setProjectName(req.getProjectName());
+        project.setDescription(req.getDescription());
+        if(req.getGithubLink() != null) {
+            project.setGithubLink(req.getGithubLink());
+        }
+        project.setUser(user);
+        projectRepository.save(project);
+        return Optional.of(new ProjectResponseDto(project));
+    }
+
+    public Optional<ProjectResponseDto> getProjectById(Long id, User user) {
+        Optional<Project> project = projectRepository.findById(id);
+
+        if (project.isEmpty()) {
+            return Optional.empty();
+        }
+
+        if (!project.getUser().getUserId().equals(user.getUserId())) {
+            return Optional.empty();
+        }
+        return Optional.of(new ProjectResponseDto(project.get()));
+    }
+}
