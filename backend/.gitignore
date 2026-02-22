@@ -31,5 +31,5 @@ build/
 
 ### VS Code ###
 .vscode
-resources/application-local.properties
+application-local.properties
 .env
