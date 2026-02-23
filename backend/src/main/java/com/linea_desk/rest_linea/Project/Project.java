@@ -52,6 +52,9 @@ public class Project {
     @OneToMany(mappedBy="project", cascade=CascadeType.ALL)
     private Collection<Task> tasks;
 
+    @Column(columnDefinition = "integer default 0")    
+    private Integer sessions = 0;
+
     @ManyToOne
     @JoinColumn(name="user_id")
     private User user;
@@ -76,14 +79,33 @@ public class Project {
     public void setState(PROJECT_STATE state)  { this.state = state; }
 
     public User getUser() { return user; }
-    public void setUser(User user) {  this.user = user; }
+    public void setUser(User user) {  
+        if (user != null) {
+            this.user = user;
+        }
+    }
+
+    public Integer getSessions() { return sessions; }
+    public void setSessions(Integer sessions) { this.sessions = sessions; }
 
     public Collection<Task> getTasks() { return tasks; }
-    public void addTask(Task task) { this.tasks.add(task); }
+    public void addTask(Task task) {
+        if (task != null) {
+            this.tasks.add(task);
+        }
+    }
 
     public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
+    public void setDescription(String description) { 
+        if (description != null && !description.trim().isEmpty()) {
+            this.description = description;
+        }
+    }
 
     public String getGithubLink() { return githubLink; }
-    public void setGithubLink(String githubLink) { this.githubLink = githubLink; }
+    public void setGithubLink(String githubLink) { 
+        if (githubLink != null && !githubLink.trim().isEmpty()) {
+            this.githubLink = githubLink;
+        }
+    }
 }

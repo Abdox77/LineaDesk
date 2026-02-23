@@ -13,10 +13,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import static org.springframework.web.bind.annotation.RequestMethod.*;
 
 import java.util.Optional;
 import java.util.Collection;
+
+
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -24,6 +28,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 import com.linea_desk.rest_linea.User.User;
 import com.linea_desk.rest_linea.common.dto.ApiResponse;
+import org.springframework.web.bind.annotation.RequestParam;
+
 
 
 @Log4j2
@@ -41,7 +47,7 @@ public class ProjectControllers{
         this.projectServices = projectServices;
     }
 
-    @RequestMapping(path="/project", method=POST)
+    @PostMapping(path="/project")
     public ResponseEntity<ApiResponse<?>>
     createNewProject(
             @AuthenticationPrincipal User currentUser,
@@ -63,6 +69,7 @@ public class ProjectControllers{
             );
         }
         catch (Exception e) {
+            log.error("The exception was caught while trying to create new project: {}", e.getMessage());
             response = new ApiResponse<>(
                     false,
                     "Internal Server Error"
@@ -74,7 +81,7 @@ public class ProjectControllers{
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @RequestMapping(path="/project/{id}", method=GET)
+    @GetMapping(path="/project/{id}")
     public ResponseEntity<ApiResponse<?>>
     getUserProjects(
         @AuthenticationPrincipal User user,
@@ -96,7 +103,7 @@ public class ProjectControllers{
             response = new ApiResponse(
                 true,
                 "Project search was a success",
-                project
+                project.get()
             );
         }
         catch (Exception e) {
@@ -110,6 +117,87 @@ public class ProjectControllers{
 
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
+
+
+    @GetMapping("/projects")
+    public ResponseEntity<ApiResponse<?>>
+    getProjectsList(
+        @AuthenticationPrincipal User user
+    ) {
+        ApiResponse<?> response;
+
+        try {
+
+
+            Optional<Collection<ProjectResponseDto>> projects = projectServices.getAllProjectsForUser(user);
+
+            if(projects.isEmpty()) {
+
+                log.error("No projects found for user with ID: {}", user.getUserId());
+                response = new ApiResponse<>(
+                    false,
+                    "No projects found for the user"
+                );
+
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+
+            response = new ApiResponse<>(
+                    true,
+                    "Projects list retrieved successfully",
+                    projects.get()
+            );
+
+        } catch (Exception e) {
+            log.error("Error retrieving projects list: {}", e.getMessage());
+            response = new ApiResponse<>(
+                    false,
+                    "Internal Server Error",
+                    e.getMessage()
+            );
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+    
+
+
+    @DeleteMapping("/project/{id}")
+    public ResponseEntity<ApiResponse<?>>
+    deleteProject(
+        @AuthenticationPrincipal User user,
+        @PathVariable Long id
+    ) {
+        ApiResponse<?> response;
+
+        try{
+            boolean isDeleted = projectServices.deleteProjectById(id, user);
+            if (!isDeleted) {
+                response = new ApiResponse<>(
+                        false,
+                        "Project not found or inaccessible"
+                );
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+
+            response = new ApiResponse<>(
+                    true,
+                    "Project deleted successfully"
+            );
+        }
+        catch (Exception e) {
+            log.error("Error deleting project: {}", e.getMessage());
+            response = new ApiResponse<>(
+                    false,
+                    "Internal Server Error",
+                    e.getMessage()
+            );
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).body(response);
+    }
+
 
 //    @RequestMapping(path="/project", method="PUT")
 //    public ResponseEntity<ApiResponse<?>> UpdateProject() {
@@ -130,6 +218,7 @@ public class ProjectControllers{
 //        catch (Exception e) {
 //
 //        }
+//         return ResponseEntity.status(HttpStatus.NO_CONTENT).body(response);
 //    }
 
 }

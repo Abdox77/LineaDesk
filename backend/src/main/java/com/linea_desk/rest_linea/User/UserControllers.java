@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,16 +28,15 @@ import java.util.List;
 
 @Log4j2
 @RestController
-@RequestMapping("/auth")
 public class UserControllers {
     private final JwtService jwtService;
-    private final UserService userService;
+    private final UserServices userService;
     private static final Logger log = LogManager.getLogger(UserControllers.class);
     private final AuthenticationService authenticationService;
 
     public UserControllers(
         JwtService jwtService,
-        UserService userService,
+        UserServices userService,
         AuthenticationService authenticationService
     ) {
         this.jwtService = jwtService; 
@@ -45,7 +45,7 @@ public class UserControllers {
 
     }
 
-    @RequestMapping(path="/login", method=POST)
+    @PostMapping(path="/auth/login")
     public ResponseEntity<ApiResponse<?>> login(@RequestBody LoginUserDto loginUserDto)
     {
         ApiResponse<?> response;
@@ -91,7 +91,7 @@ public class UserControllers {
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 
-    @RequestMapping(path="/signup", method=POST)
+    @PostMapping(path="/auth/signup")
     public ResponseEntity<ApiResponse<?>> signup(@RequestBody RegisterUserDto registerUserDto)
     {
         try {
@@ -118,6 +118,8 @@ public class UserControllers {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
+
+    
 
 
 }
