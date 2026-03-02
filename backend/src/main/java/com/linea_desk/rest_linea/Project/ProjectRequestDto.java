@@ -1,10 +1,13 @@
 package com.linea_desk.rest_linea.Project;
 
+import com.linea_desk.rest_linea.Project.Project.PROJECT_STATE;
+
 public class ProjectRequestDto {
     private Integer sessions;
     private String projectName;
     private String description;
     private String githubLink;
+    private PROJECT_STATE state;
 
     public ProjectRequestDto() { }
 
@@ -19,4 +22,7 @@ public class ProjectRequestDto {
     
     public Integer getSessions() { return this.sessions; }
     public void setSessions(Integer sessions) { this.sessions = sessions; }
+
+    public PROJECT_STATE getState() { return state; }
+    public void setState(PROJECT_STATE state) { this.state = state; }
 }

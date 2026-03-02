@@ -74,4 +74,37 @@ public class ProjectServices {
                 .toList();
         return Optional.of(responseDtos);
     }
+
+    public Optional<ProjectResponseDto> updateProject(Long id, ProjectRequestDto req, User user) {
+        Optional<Project> projectOpt = projectRepository.findByIdWithTasks(id);
+
+        if (projectOpt.isEmpty()) {
+            return Optional.empty();
+        }
+
+        Project project = projectOpt.get();
+
+        if (!project.getUser().getUserId().equals(user.getUserId())) {
+            return Optional.empty();
+        }
+
+        if (req.getProjectName() != null && !req.getProjectName().trim().isEmpty()) {
+            project.setProjectName(req.getProjectName());
+        }
+        if (req.getDescription() != null) {
+            project.setDescription(req.getDescription());
+        }
+        if (req.getGithubLink() != null) {
+            project.setGithubLink(req.getGithubLink());
+        }
+        if (req.getSessions() != null) {
+            project.setSessions(req.getSessions());
+        }
+        if (req.getState() != null) {
+            project.setState(req.getState());
+        }
+
+        projectRepository.save(project);
+        return Optional.of(new ProjectResponseDto(project));
+    }
 }

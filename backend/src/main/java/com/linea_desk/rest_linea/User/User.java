@@ -7,6 +7,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import com.linea_desk.rest_linea.Habit.Habit;
+import com.linea_desk.rest_linea.Journal.Journal;
 import com.linea_desk.rest_linea.Project.Project;
 
 import jakarta.persistence.CascadeType;
@@ -54,6 +55,9 @@ public class User implements UserDetails {
 
     @OneToMany(mappedBy="user", cascade=CascadeType.ALL)
     private Collection<Habit> habits;
+
+    @OneToMany(mappedBy="user", cascade=CascadeType.ALL)
+    private Collection<Journal> journals;
 
     public User() { }
 
