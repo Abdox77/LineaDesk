@@ -1,5 +1,8 @@
 package com.linea_desk.rest_linea.User;
 
+import lombok.Data;
+
+@Data
 public class UserResponseDto {
     private String email;
     private String username;
