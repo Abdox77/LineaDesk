@@ -21,7 +21,6 @@ public class ProjectServices {
 
     public Optional<ProjectResponseDto> createNewProject(ProjectRequestDto req, User user) {
         Project project = new Project();
-
         /*
             here i should check for whether the project exists or not
             and i should throw customized exception
