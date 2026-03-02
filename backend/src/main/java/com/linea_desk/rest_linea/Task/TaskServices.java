@@ -72,4 +72,35 @@ public class TaskServices {
         }
         return task.map(this::convertToDto);
     }
+
+    public Optional<TaskResponseDto> updateTask(Long id, TaskRequestDto req, User user) {
+        Optional<Task> taskOpt = taskRepository.findById(id);
+
+        if (taskOpt.isEmpty()) {
+            return Optional.empty();
+        }
+
+        Task task = taskOpt.get();
+
+        if (!task.getProject().getUser().getUserId().equals(user.getUserId())) {
+            return Optional.empty();
+        }
+
+        if (req.getTaskName() != null && !req.getTaskName().trim().isEmpty()) {
+            task.setTaskName(req.getTaskName());
+        }
+        if (req.getDescription() != null) {
+            task.setTaskDescription(req.getDescription());
+        }
+        if (req.getState() != null) {
+            task.setTaskState(req.getState());
+        }
+        if (req.getImportance() != null) {
+            task.setTaskImportance(req.getImportance());
+        }
+        task.setTaskDuration(req.getDuration());
+
+        taskRepository.save(task);
+        return Optional.of(convertToDto(task));
+    }
 }

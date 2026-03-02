@@ -5,6 +5,8 @@ import org.springframework.web.bind.annotation.RestController;
 import lombok.extern.log4j.Log4j2;
 
 import org.springframework.web.bind.annotation.PathVariable;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -28,6 +30,7 @@ import com.linea_desk.rest_linea.common.dto.ApiResponse;
 public class HabitControllers {
 
     private final HabitServices habitServices;
+    private static final Logger log = LogManager.getLogger(HabitControllers.class);
 
     public HabitControllers(HabitServices habitServices) {
         this.habitServices = habitServices;

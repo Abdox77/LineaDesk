@@ -1,156 +1,98 @@
-package com.linea_desk.rest_linea.Project;
+package com.linea_desk.rest_linea.Journal;
 
 import org.springframework.web.bind.annotation.RestController;
 
 import lombok.extern.log4j.Log4j2;
-
 
 import org.springframework.web.bind.annotation.PathVariable;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import static org.springframework.web.bind.annotation.RequestMethod.*;
 
 import java.util.Optional;
 import java.util.Collection;
 
-
-
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PathVariable;
 
 import com.linea_desk.rest_linea.User.User;
 import com.linea_desk.rest_linea.common.dto.ApiResponse;
-import org.springframework.web.bind.annotation.RequestParam;
-
-
 
 @Log4j2
 @RestController
 @RequestMapping(path="/api")
-public class ProjectControllers{
+public class JournalControllers {
 
-    private final ProjectServices projectServices;
-    private static final Logger log = LogManager.getLogger(ProjectControllers.class);
+    private final JournalServices journalServices;
+    private static final Logger log = LogManager.getLogger(JournalControllers.class);
 
-
-    public ProjectControllers(
-            ProjectServices projectServices
-    ){
-        this.projectServices = projectServices;
+    public JournalControllers(JournalServices journalServices) {
+        this.journalServices = journalServices;
     }
 
-    @PostMapping(path="/project")
+    @PostMapping(path="/journal")
     public ResponseEntity<ApiResponse<?>>
-    createNewProject(
+    createNewJournal(
             @AuthenticationPrincipal User currentUser,
-            @RequestBody ProjectRequestDto request
+            @RequestBody JournalRequestDto request
     ) {
         ApiResponse<?> response;
 
         try {
-            Optional<ProjectResponseDto> project = projectServices.createNewProject(request, currentUser);
-            if (project.isEmpty()) {
-                throw new Exception("invalid operation project dto is empty");
+            Optional<JournalResponseDto> journal = journalServices.createNewJournal(request, currentUser);
+            if (journal.isEmpty()) {
+                throw new Exception("invalid operation journal dto is empty");
             }
 
-            ProjectResponseDto responseDto = project.get();
+            JournalResponseDto responseDto = journal.get();
             response = new ApiResponse<>(
                     true,
-                    "Project created successfuly",
+                    "Journal created successfully",
                     responseDto
             );
-        }
-        catch (Exception e) {
-            log.error("The exception was caught while trying to create new project: {}", e.getMessage());
+        } catch (Exception e) {
+            log.error("Error creating journal: {}", e.getMessage());
             response = new ApiResponse<>(
                     false,
                     "Internal Server Error"
             );
-
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @GetMapping(path="/project/{id}")
+    @GetMapping(path="/journal/{id}")
     public ResponseEntity<ApiResponse<?>>
-    getUserProjects(
-        @AuthenticationPrincipal User user,
-        @PathVariable Long id
-    ) {
-        ApiResponse<?> response;
-        try {
-            Optional<ProjectResponseDto> project = projectServices.getProjectById(id, user);
-
-            if(project.isEmpty()){
-                response = new ApiResponse<>(
-                    false,
-                    "Project not found"
-                );
-
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-            }
-
-            response = new ApiResponse(
-                true,
-                "Project search was a success",
-                project.get()
-            );
-        }
-        catch (Exception e) {
-            response = new ApiResponse<>(
-                    false,
-                    "Internal Server Error",
-                    e.getMessage()
-            );
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-
-        return ResponseEntity.status(HttpStatus.OK).body(response);
-    }
-
-
-    @GetMapping("/projects")
-    public ResponseEntity<ApiResponse<?>>
-    getProjectsList(
-        @AuthenticationPrincipal User user
+    getJournalById(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long id
     ) {
         ApiResponse<?> response;
 
         try {
+            Optional<JournalResponseDto> journal = journalServices.getJournalById(id, user);
 
-
-            Optional<Collection<ProjectResponseDto>> projects = projectServices.getAllProjectsForUser(user);
-
-            if(projects.isEmpty()) {
-
-                log.error("No projects found for user with ID: {}", user.getUserId());
+            if (journal.isEmpty()) {
                 response = new ApiResponse<>(
-                    false,
-                    "No projects found for the user"
+                        false,
+                        "Journal not found"
                 );
-
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
             }
 
             response = new ApiResponse<>(
                     true,
-                    "Projects list retrieved successfully",
-                    projects.get()
+                    "Journal retrieved successfully",
+                    journal.get()
             );
-
         } catch (Exception e) {
-            log.error("Error retrieving projects list: {}", e.getMessage());
             response = new ApiResponse<>(
                     false,
                     "Internal Server Error",
@@ -161,72 +103,106 @@ public class ProjectControllers{
 
         return ResponseEntity.status(HttpStatus.OK).body(response);
     }
-    
 
-
-    @DeleteMapping("/project/{id}")
+    @GetMapping("/journals")
     public ResponseEntity<ApiResponse<?>>
-    deleteProject(
-        @AuthenticationPrincipal User user,
-        @PathVariable Long id
+    getJournalsList(
+            @AuthenticationPrincipal User user
     ) {
         ApiResponse<?> response;
 
-        try{
-            boolean isDeleted = projectServices.deleteProjectById(id, user);
+        try {
+            Optional<Collection<JournalResponseDto>> journals = journalServices.getAllJournalsForUser(user);
+
+            if (journals.isEmpty()) {
+                log.error("No journals found for user with ID: {}", user.getUserId());
+                response = new ApiResponse<>(
+                        false,
+                        "No journals found for the user"
+                );
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+
+            response = new ApiResponse<>(
+                    true,
+                    "Journals list retrieved successfully",
+                    journals.get()
+            );
+        } catch (Exception e) {
+            log.error("Error retrieving journals list: {}", e.getMessage());
+            response = new ApiResponse<>(
+                    false,
+                    "Internal Server Error",
+                    e.getMessage()
+            );
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @PutMapping("/journal/{id}")
+    public ResponseEntity<ApiResponse<?>>
+    updateJournal(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long id,
+            @RequestBody JournalRequestDto request
+    ) {
+        ApiResponse<?> response;
+
+        try {
+            Optional<JournalResponseDto> journal = journalServices.updateJournal(id, request, user);
+
+            if (journal.isEmpty()) {
+                response = new ApiResponse<>(
+                        false,
+                        "Journal not found or inaccessible"
+                );
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+
+            response = new ApiResponse<>(
+                    true,
+                    "Journal updated successfully",
+                    journal.get()
+            );
+        } catch (Exception e) {
+            log.error("Error updating journal: {}", e.getMessage());
+            response = new ApiResponse<>(
+                    false,
+                    "Internal Server Error",
+                    e.getMessage()
+            );
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+
+        return ResponseEntity.status(HttpStatus.OK).body(response);
+    }
+
+    @DeleteMapping("/journal/{id}")
+    public ResponseEntity<ApiResponse<?>>
+    deleteJournal(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long id
+    ) {
+        ApiResponse<?> response;
+
+        try {
+            boolean isDeleted = journalServices.deleteJournalById(id, user);
             if (!isDeleted) {
                 response = new ApiResponse<>(
                         false,
-                        "Project not found or inaccessible"
+                        "Journal not found or inaccessible"
                 );
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
             }
 
             response = new ApiResponse<>(
                     true,
-                    "Project deleted successfully"
-            );
-        }
-        catch (Exception e) {
-            log.error("Error deleting project: {}", e.getMessage());
-            response = new ApiResponse<>(
-                    false,
-                    "Internal Server Error",
-                    e.getMessage()
-            );
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).body(response);
-    }
-
-
-    @PutMapping("/project/{id}")
-    public ResponseEntity<ApiResponse<?>>
-    updateProject(
-        @AuthenticationPrincipal User user,
-        @PathVariable Long id,
-        @RequestBody ProjectRequestDto request
-    ) {
-        ApiResponse<?> response;
-
-        try {
-            Optional<ProjectResponseDto> project = projectServices.updateProject(id, request, user);
-
-            if (project.isEmpty()) {
-                response = new ApiResponse<>(
-                        false,
-                        "Project not found or inaccessible"
-                );
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-            }
-
-            response = new ApiResponse<>(
-                    true,
-                    "Project updated successfully",
-                    project.get()
+                    "Journal deleted successfully"
             );
         } catch (Exception e) {
-            log.error("Error updating project: {}", e.getMessage());
+            log.error("Error deleting journal: {}", e.getMessage());
             response = new ApiResponse<>(
                     false,
                     "Internal Server Error",
@@ -235,7 +211,7 @@ public class ProjectControllers{
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
 
-        return ResponseEntity.status(HttpStatus.OK).body(response);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).body(response);
     }
-
 }
+

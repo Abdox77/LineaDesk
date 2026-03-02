@@ -24,6 +24,7 @@ import lombok.extern.log4j.Log4j2;
 
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 
@@ -142,5 +143,42 @@ public class TaskControllers {
         }
 
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body(response);
+    }
+
+    @PutMapping("/task/{id}")
+    public ResponseEntity<ApiResponse<?>> updateTask(
+        @AuthenticationPrincipal User currentUser,
+        @PathVariable Long id,
+        @RequestBody TaskRequestDto requestDto
+    ) {
+        ApiResponse<?> response;
+
+        try {
+            Optional<TaskResponseDto> task = taskServices.updateTask(id, requestDto, currentUser);
+
+            if (task.isEmpty()) {
+                response = new ApiResponse<>(
+                    false,
+                    "Task not found or inaccessible"
+                );
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            }
+
+            response = new ApiResponse<>(
+                true,
+                "Task updated successfully",
+                task.get()
+            );
+        } catch (Exception e) {
+            log.error("Error updating task: {}", e.getMessage());
+            response = new ApiResponse<>(
+                false,
+                "Internal Server Error",
+                e.getMessage()
+            );
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+
+        return ResponseEntity.status(HttpStatus.OK).body(response);
     }
 }
