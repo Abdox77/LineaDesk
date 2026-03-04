@@ -9,3 +9,18 @@ body {
 .material-symbols-outlined {
     font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
+
+/* Heatmap scrollbar */
+.hide-scrollbar::-webkit-scrollbar {
+    height: 6px;
+}
+.hide-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 4px;
+}
+.dark .hide-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #4b5563;
+}
+.hide-scrollbar::-webkit-scrollbar-track {
+    background-color: transparent;
+}
