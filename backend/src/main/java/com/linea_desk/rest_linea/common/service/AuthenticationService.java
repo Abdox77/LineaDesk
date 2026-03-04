@@ -54,7 +54,7 @@ public class AuthenticationService {
 
             log.error("After the creation of the user variable");
             userRepository.save(user);
-            return Optional.of(new UserResponseDto(email, username, password));
+            return Optional.of(new UserResponseDto(email, username));
         }
         catch (Exception exception) {
             log.error("exception was caught in the authenticationService " + exception.getMessage());

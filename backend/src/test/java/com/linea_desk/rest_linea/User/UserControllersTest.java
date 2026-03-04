@@ -1,38 +1,47 @@
 package com.linea_desk.rest_linea.User;
 
+import java.util.Optional;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.FilterType;
+import org.springframework.http.MediaType;
+import org.springframework.security.core.userdetails.UserDetails;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.linea_desk.rest_linea.common.dto.LoginUserDto;
 import com.linea_desk.rest_linea.common.dto.RegisterUserDto;
 import com.linea_desk.rest_linea.common.service.AuthenticationService;
 import com.linea_desk.rest_linea.common.service.JwtService;
+import com.linea_desk.rest_linea.config.ApplicationConfiguration;
+import com.linea_desk.rest_linea.config.GithubOAuthSuccessHandler;
+import com.linea_desk.rest_linea.config.JwtAuthenticationFilter;
 import com.linea_desk.rest_linea.config.SecurityConfiguration;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.context.annotation.ComponentScan;
-import org.springframework.context.annotation.FilterType;
-import org.springframework.http.MediaType;
-import org.springframework.test.web.servlet.MockMvc;
-
-import java.util.Optional;
-
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.when;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(controllers = UserControllers.class,
-    excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = SecurityConfiguration.class))
+    excludeFilters = {
+        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = SecurityConfiguration.class),
+        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = ApplicationConfiguration.class),
+        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = JwtAuthenticationFilter.class),
+        @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE, classes = GithubOAuthSuccessHandler.class)
+    })
 class UserControllersTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @MockitoBean
     private JwtService jwtService;
@@ -48,8 +57,11 @@ class UserControllersTest {
     private User testUser;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         testUser = new User("test@example.com", "testuser", "encodedPassword");
+        java.lang.reflect.Field idField = User.class.getDeclaredField("id");
+        idField.setAccessible(true);
+        idField.set(testUser, 1L);
 
         loginRequest = new LoginUserDto();
         loginRequest.setEmail("test@example.com");
@@ -64,7 +76,7 @@ class UserControllersTest {
     void login_Success() throws Exception {
         when(authenticationService.authenticate(any(LoginUserDto.class)))
                 .thenReturn(Optional.of(testUser));
-        when(jwtService.generateToken(any(User.class)))
+        when(jwtService.generateToken(any(UserDetails.class)))
                 .thenReturn("mock-jwt-token");
 
         mockMvc.perform(post("/auth/login")
@@ -73,7 +85,7 @@ class UserControllersTest {
                         .content(objectMapper.writeValueAsString(loginRequest)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("User registered successfully"))
+                .andExpect(jsonPath("$.message").value("Login successful"))
                 .andExpect(jsonPath("$.data.jwtToken").value("mock-jwt-token"));
     }
 
@@ -124,7 +136,7 @@ class UserControllersTest {
 
     @Test
     void signup_Success() throws Exception {
-        UserResponseDto userResponse = new UserResponseDto("testuser", "test@example.com", "encodedPassword");
+        UserResponseDto userResponse = new UserResponseDto("test@example.com", "testuser");
         when(authenticationService.signup(any(RegisterUserDto.class)))
                 .thenReturn(Optional.of(userResponse));
 
