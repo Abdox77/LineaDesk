@@ -1,6 +1,5 @@
 import React from 'react';
 
-// Generate deterministic heatmap data (52 weeks x 7 days)
 function generateHeatmapData(): number[][] {
     const seed = [
         [0,1,0,0,2,0,0],[3,4,2,0,1,0,0],[0,0,1,1,0,3,2],[4,3,0,1,0,0,0],
