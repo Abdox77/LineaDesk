@@ -1,21 +1,28 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useAuth } from '../auth/AuthContext';
 
 export function OAuthCallback() {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
+    const { login } = useAuth();
 
     useEffect(() => {
         const token = searchParams.get('token');
         const error = searchParams.get('error');
 
         if (token) {
-            localStorage.setItem('token', token);
+            login(token, {
+                id: 0,
+                email: '',
+                jwtToken: token,
+                username: searchParams.get('username') ?? 'Developer',
+            });
             navigate('/dashboard', { replace: true });
         } else {
             navigate(`/login?error=${error ?? 'oauth_failed'}`, { replace: true });
         }
-    }, [searchParams, navigate]);
+    }, [searchParams, navigate, login]);
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark">

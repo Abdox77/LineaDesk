@@ -3,8 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import axios from 'axios';
 import { NavBar } from '../components/NavBar';
 import { AuthFooter } from '../components/AuthFooter';
-
-const BACKEND_URL = 'http://localhost:9000';
+import { API_BASE } from '../api/client';
 
 export function RegisterCard() {
     const navigate = useNavigate();
@@ -15,7 +14,7 @@ export function RegisterCard() {
     const [error, setError] = useState('');
 
     const handleGithubOAuth = () => {
-        window.location.href = `${BACKEND_URL}/oauth2/authorization/github`;
+        window.location.href = `${API_BASE}/oauth2/authorization/github`;
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -23,7 +22,7 @@ export function RegisterCard() {
         setIsLoading(true);
         setError('');
         try {
-            const { data } = await axios.post(`${BACKEND_URL}/auth/signup`, {
+            const { data } = await axios.post(`${API_BASE}/auth/signup`, {
                 username: name,
                 email,
                 password,
@@ -56,7 +55,6 @@ export function RegisterCard() {
             <NavBar ctaLabel="Sign In" ctaHref="/login" />
             <main className="flex-1 flex flex-col items-center justify-center px-4 py-12">
                 <div className="w-full max-w-[440px]">
-                    {/* Headline */}
                     <div className="mb-8">
                         <h1 className="text-slate-900 dark:text-white tracking-tight text-[32px] font-extrabold leading-tight text-center pb-2 font-display">
                             Join Developer Hub
@@ -66,7 +64,6 @@ export function RegisterCard() {
                         </p>
                     </div>
 
-                    {/* Registration Card */}
                     <div className="bg-white dark:bg-[#161b22] border border-slate-200 dark:border-[#30363d] rounded-xl p-8 shadow-sm">
                         {error && (
                             <div className="mb-5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200 px-4 py-3 rounded-lg text-sm">
@@ -78,7 +75,6 @@ export function RegisterCard() {
                         )}
 
                         <form className="space-y-5" onSubmit={handleSubmit}>
-                            {/* Full Name */}
                             <div className="flex flex-col gap-2">
                                 <label className="text-slate-700 dark:text-slate-200 text-sm font-semibold leading-normal">Full Name</label>
                                 <input
@@ -91,7 +87,6 @@ export function RegisterCard() {
                                 />
                             </div>
 
-                            {/* Email */}
                             <div className="flex flex-col gap-2">
                                 <label className="text-slate-700 dark:text-slate-200 text-sm font-semibold leading-normal">Email Address</label>
                                 <input
@@ -104,7 +99,6 @@ export function RegisterCard() {
                                 />
                             </div>
 
-                            {/* Password */}
                             <div className="flex flex-col gap-2">
                                 <label className="text-slate-700 dark:text-slate-200 text-sm font-semibold leading-normal">Password</label>
                                 <input
@@ -121,7 +115,6 @@ export function RegisterCard() {
                                 </p>
                             </div>
 
-                            {/* Submit */}
                             <button
                                 className="w-full flex items-center justify-center rounded-lg h-12 px-4 bg-primary text-white text-sm font-bold tracking-wide hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 mt-2 disabled:opacity-60"
                                 type="submit"
@@ -131,7 +124,6 @@ export function RegisterCard() {
                             </button>
                         </form>
 
-                        {/* Divider */}
                         <div className="relative my-8">
                             <div className="absolute inset-0 flex items-center">
                                 <span className="w-full border-t border-slate-200 dark:border-[#30363d]"></span>
@@ -143,7 +135,6 @@ export function RegisterCard() {
                             </div>
                         </div>
 
-                        {/* GitHub OAuth Button */}
                         <button
                             className="w-full flex items-center justify-center gap-3 rounded-lg h-12 px-4 bg-white dark:bg-[#21262d] text-slate-900 dark:text-white border border-slate-300 dark:border-[#30363d] text-sm font-bold hover:bg-slate-50 dark:hover:bg-[#30363d] transition-all"
                             type="button"
@@ -156,7 +147,6 @@ export function RegisterCard() {
                         </button>
                     </div>
 
-                    {/* Bottom Navigation */}
                     <div className="mt-8 text-center">
                         <p className="text-sm text-slate-600 dark:text-[#8b949e]">
                             Already have an account?{' '}

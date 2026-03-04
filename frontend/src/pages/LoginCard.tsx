@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { NavBar } from '../components/NavBar';
 import { AuthFooter } from '../components/AuthFooter';
-
-const BACKEND_URL = "http://localhost:9000";
+import { useAuth } from '../auth/AuthContext';
+import { API_BASE } from '../api/client';
 
 export function LoginCard() {
     const location = useLocation();
+    const navigate = useNavigate();
+    const { login } = useAuth();
     const successMessage = (location.state as { message?: string } | null)?.message;
 
     const [email, setEmail] = useState('');
@@ -17,7 +19,7 @@ export function LoginCard() {
     const [error, setError] = useState('');
 
     const handleGithubOAuth = () => {
-        window.location.href = `${BACKEND_URL}/oauth2/authorization/github`;
+        window.location.href = `${API_BASE}/oauth2/authorization/github`;
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -26,7 +28,7 @@ export function LoginCard() {
         setError('');
 
         try {
-            const { data } = await axios.post(`${BACKEND_URL}/auth/login`, {
+            const { data } = await axios.post(`${API_BASE}/auth/login`, {
                 email,
                 password,
             });
@@ -34,9 +36,9 @@ export function LoginCard() {
             if (data.success) {
                 const jwtToken = data.data?.jwtToken;
                 if (jwtToken) {
-                    localStorage.setItem('token', jwtToken);
+                    login(jwtToken, data.data);
                 }
-                window.location.href = '/dashboard';
+                navigate('/dashboard', { replace: true });
             } else {
                 setError(data.message || 'Invalid email or password');
             }
@@ -62,7 +64,6 @@ export function LoginCard() {
             <NavBar ctaLabel="Register" ctaHref="/register" />
             <main className="flex-1 flex flex-col items-center justify-center px-4 py-12">
                 <div className="w-full max-w-[440px]">
-                    {/* Headline */}
                     <div className="mb-8">
                         <h1 className="text-slate-900 dark:text-white tracking-tight text-[32px] font-extrabold leading-tight text-center pb-2 font-display">
                             Welcome back
@@ -72,7 +73,6 @@ export function LoginCard() {
                         </p>
                     </div>
 
-                    {/* Login Card */}
                     <div className="bg-white dark:bg-[#161b22] border border-slate-200 dark:border-[#30363d] rounded-xl p-8 shadow-sm">
                         {successMessage && (
                             <div className="mb-5 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 text-green-800 dark:text-green-200 px-4 py-3 rounded-lg text-sm">
@@ -89,7 +89,6 @@ export function LoginCard() {
                         )}
 
                         <form className="space-y-5" onSubmit={handleSubmit}>
-                            {/* Email */}
                             <div className="flex flex-col gap-2">
                                 <label className="text-slate-700 dark:text-slate-200 text-sm font-semibold leading-normal">
                                     Email Address
@@ -104,7 +103,6 @@ export function LoginCard() {
                                 />
                             </div>
 
-                            {/* Password */}
                             <div className="flex flex-col gap-2">
                                 <div className="flex justify-between items-center">
                                     <label className="text-slate-700 dark:text-slate-200 text-sm font-semibold leading-normal">Password</label>
@@ -131,7 +129,6 @@ export function LoginCard() {
                                 </div>
                             </div>
 
-                            {/* Submit */}
                             <button
                                 className="w-full flex items-center justify-center rounded-lg h-12 px-4 bg-primary text-white text-sm font-bold tracking-wide hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 mt-2 disabled:opacity-60"
                                 type="submit"
@@ -141,7 +138,6 @@ export function LoginCard() {
                             </button>
                         </form>
 
-                        {/* Divider */}
                         <div className="relative my-8">
                             <div className="absolute inset-0 flex items-center">
                                 <span className="w-full border-t border-slate-200 dark:border-[#30363d]"></span>
@@ -153,7 +149,6 @@ export function LoginCard() {
                             </div>
                         </div>
 
-                        {/* GitHub OAuth Button */}
                         <button
                             className="w-full flex items-center justify-center gap-3 rounded-lg h-12 px-4 bg-white dark:bg-[#21262d] text-slate-900 dark:text-white border border-slate-300 dark:border-[#30363d] text-sm font-bold hover:bg-slate-50 dark:hover:bg-[#30363d] transition-all"
                             type="button"
@@ -166,7 +161,6 @@ export function LoginCard() {
                         </button>
                     </div>
 
-                    {/* Bottom Navigation */}
                     <div className="mt-8 text-center">
                         <p className="text-sm text-slate-600 dark:text-[#8b949e]">
                             Don't have an account?{' '}
