@@ -21,45 +21,54 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfiguration {
     private final AuthenticationProvider authenticationProvider;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final GithubOAuthSuccessHandler githubOAuthSuccessHandler;
 
     @Value("${cors.allowed-origins}")
     private String allowedOrigins;
 
     public SecurityConfiguration(
-        @Lazy AuthenticationProvider authenticationProvider, 
-        @Lazy JwtAuthenticationFilter jwtAuthenticationFilter
+        @Lazy AuthenticationProvider authenticationProvider,
+        @Lazy JwtAuthenticationFilter jwtAuthenticationFilter,
+        GithubOAuthSuccessHandler githubOAuthSuccessHandler
     ) {
-
-        this.authenticationProvider = authenticationProvider; 
+        this.authenticationProvider = authenticationProvider;
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.githubOAuthSuccessHandler = githubOAuthSuccessHandler;
     }
 
     @Bean
-    public SecurityFilterChain sercurityFilterChain(HttpSecurity http)
-        throws Exception
-    {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/auth/**", "/users", "/hello").permitAll()
+                .requestMatchers(
+                    "/auth/**",
+                    "/users",
+                    "/hello",
+                    "/oauth2/**",
+                    "/login/oauth2/**"
+                ).permitAll()
                 .anyRequest().authenticated()
             )
             .sessionManagement(session -> session
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
             )
             .authenticationProvider(authenticationProvider)
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
-    
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+            .oauth2Login(oauth2 -> oauth2
+                .successHandler(githubOAuthSuccessHandler)
+            );
+
         return http.build();
     }
-    
+
     @Bean
-    CorsConfigurationSource corsConfigurationSource(){
+    CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        
+
         configuration.setAllowedOrigins(List.of(allowedOrigins.split(",")));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS")); 
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

@@ -12,7 +12,6 @@ import com.linea_desk.rest_linea.common.service.JwtService;
 
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -22,18 +21,14 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 
 import java.io.IOException;
-import lombok.extern.log4j.Log4j2;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
 
-import org.hibernate.validator.internal.util.stereotypes.Lazy;
 
-
-@Log4j2
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
-    @Lazy private final JwtService jwtService;
-    @Lazy private final UserDetailsService userDetailsService;
+    private final JwtService jwtService;
+    private final UserDetailsService userDetailsService;
     private final HandlerExceptionResolver handlerExceptionResolver;
     private static final Logger log = LogManager.getLogger(JwtAuthenticationFilter.class);
 

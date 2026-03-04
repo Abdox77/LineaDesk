@@ -1,32 +1,21 @@
 package com.linea_desk.rest_linea.User;
 
-
 import com.linea_desk.rest_linea.common.service.JwtService;
 import com.linea_desk.rest_linea.common.service.AuthenticationService;
 import com.linea_desk.rest_linea.common.dto.ApiResponse;
-// import com.linea_desk.rest_linea.common.dto.ExceptionResponse;
 import com.linea_desk.rest_linea.common.dto.RegisterUserDto;
 import com.linea_desk.rest_linea.common.dto.LoginUserDto;
 import com.linea_desk.rest_linea.common.dto.LoginResponse;
-import lombok.extern.log4j.Log4j2;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import static org.springframework.web.bind.annotation.RequestMethod.*;
 import java.util.Optional;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import java.util.List;
 
 
-@Log4j2
 @RestController
 public class UserControllers {
     private final JwtService jwtService;
@@ -67,15 +56,15 @@ public class UserControllers {
             }
 
             LoginResponse loginResponse = new LoginResponse(
-                                            jwtToken, 
-                                            user.getUserId(), 
+                                            jwtToken,
+                                            user.getUserId(),
                                             user.getUsername(),
                                             user.getDisplayName()
                                         );
 
             response = new ApiResponse<>(
                     true,
-                    "User registered successfully", 
+                    "Login successful",
                             loginResponse
             );
         }
