@@ -10,6 +10,9 @@ jobs:
   build:
     name: Build & Test
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
 
     steps:
       - name: Checkout code
@@ -34,14 +37,13 @@ jobs:
           cors.allowed-origins=http://localhost:3000
           security.jwt.secret-key=dGVzdC1zZWNyZXQta2V5LWZvci1jaS1waXBlbGluZS1vbmx5LW5vdC1mb3ItcHJvZHVjdGlvbi11c2U=
           security.jwt.expiration-time=3600000
-          spring.datasource.url=jdbc:h2:mem:cidb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=false
+          spring.datasource.url=jdbc:h2:mem:cidb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
           spring.datasource.username=sa
           spring.datasource.password=
           spring.datasource.driver-class-name=org.h2.Driver
           spring.jpa.hibernate.ddl-auto=create-drop
           spring.jpa.open-in-view=false
           EOF
-          # Strip leading whitespace from each line
           sed -i 's/^[[:space:]]*//' src/main/resources/application.properties
 
       - name: Build project
@@ -58,7 +60,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-reports
-          path: target/surefire-reports/
+          path: backend/target/surefire-reports/
           retention-days: 7
 
       - name: Upload build artifact
@@ -66,6 +68,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: app-jar
-          path: target/*.jar
+          path: backend/target/*.jar
           retention-days: 14
-
+    
