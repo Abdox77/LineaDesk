@@ -7,6 +7,7 @@ public class TaskResponseDto {
     private String taskName;
     private Long projectId;
     private String description;
+    private int duration;
     private Task.TASK_STATE state;
     private Task.TASK_IMPORTANCE importance;
 
@@ -26,6 +27,7 @@ public class TaskResponseDto {
         this.taskName = task.getTaskName();
         this.projectId = task.getProject().getProjectId();
         this.description = task.getTaskDescription();
+        this.duration = task.getTaskDuration();
         this.state = task.getTaskState();
         this.importance = task.getTaskImportance();
     }
@@ -45,6 +47,9 @@ public class TaskResponseDto {
     public Task.TASK_STATE getState() { return state; }
     public void setState(Task.TASK_STATE state) { this.state = state; }
     
+    public int getDuration() { return duration; }
+    public void setDuration(int duration) { this.duration = duration; }
+
     public Task.TASK_IMPORTANCE getImportance() { return importance; }
     public void setImportance(Task.TASK_IMPORTANCE importance) { this.importance = importance; }
 }

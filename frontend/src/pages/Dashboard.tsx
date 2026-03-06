@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Sidebar } from '../components/Sidebar';
 import { ActivityHeatmap } from '../components/ActivityHeatmap';
 import { useAuth } from '../auth/AuthContext';
-import { fetchProjects, fetchHabits } from '../api/endpoints';
-import type { ProjectResponseDto, HabitResponseDto, TaskResponseDto } from '../api/types';
+import { fetchProjects, fetchHabits, createProject } from '../api/endpoints';
+import type { ProjectResponseDto, HabitResponseDto, ProjectRequestDto } from '../api/types';
+import { CreateProjectModal } from '../components/CreateProjectModal';
+import { logActivity } from '../api/activityTracker';
 
 export function Dashboard() {
     const { user } = useAuth();
@@ -12,23 +15,26 @@ export function Dashboard() {
     const [projects, setProjects] = useState<ProjectResponseDto[]>([]);
     const [habits, setHabits] = useState<HabitResponseDto[]>([]);
     const [loading, setLoading] = useState(true);
+    const [createModalOpen, setCreateModalOpen] = useState(false);
+    const [activityKey, setActivityKey] = useState(0);
+
+    const loadData = async () => {
+        try {
+            const [p, h] = await Promise.all([fetchProjects(), fetchHabits()]);
+            setProjects(p);
+            setHabits(h);
+        } catch {
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
-        async function load() {
-            try {
-                const [p, h] = await Promise.all([fetchProjects(), fetchHabits()]);
-                setProjects(p);
-                setHabits(h);
-            } catch {
-            } finally {
-                setLoading(false);
-            }
-        }
-        load();
+        loadData();
     }, []);
 
     const allTasks = projects.flatMap((p) => p.tasks ?? []);
-    const doneTasks = allTasks.filter((t) => t.state === 'DONE');
+    const doneTasks = allTasks.filter((t) => t.state === 'FINISHED');
     const totalTasks = allTasks.length;
 
     const bestStreak = habits.reduce((max, h) => Math.max(max, h.streaks ?? 0), 0);
@@ -67,14 +73,17 @@ export function Dashboard() {
                                 <span className="material-symbols-outlined text-[18px]">calendar_today</span>
                                 This Month
                             </button>
-                            <button className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium shadow-md hover:bg-sky-600 transition-all">
+                            <button
+                                onClick={() => setCreateModalOpen(true)}
+                                className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium shadow-md hover:bg-sky-600 transition-all"
+                            >
                                 <span className="material-symbols-outlined text-[18px]">add</span>
-                                New Task
+                                New Project
                             </button>
                         </div>
                     </header>
 
-                    <ActivityHeatmap />
+                    <ActivityHeatmap refreshKey={activityKey} />
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         <ProjectsCard projects={projects} loading={loading} />
@@ -88,6 +97,19 @@ export function Dashboard() {
                     </div>
                 </div>
             </main>
+
+            {createModalOpen && (
+                <CreateProjectModal
+                    onSave={async (data: ProjectRequestDto) => {
+                        await createProject(data);
+                        logActivity('project_created');
+                        setCreateModalOpen(false);
+                        setActivityKey((k) => k + 1);
+                        await loadData();
+                    }}
+                    onClose={() => setCreateModalOpen(false)}
+                />
+            )}
         </div>
     );
 }
@@ -126,7 +148,7 @@ function ProjectsCard({ projects, loading }: ProjectsCardProps) {
                     <ul className="flex flex-col">
                         {projects.slice(0, 4).map((project, i) => {
                             const taskCount = project.tasks?.length ?? 0;
-                            const doneCount = project.tasks?.filter((t) => t.state === 'DONE').length ?? 0;
+                            const doneCount = project.tasks?.filter((t) => t.state === 'FINISHED').length ?? 0;
                             return (
                                 <li
                                     key={project.projectId}
@@ -136,40 +158,28 @@ function ProjectsCard({ projects, loading }: ProjectsCardProps) {
                                             : ''
                                     }`}
                                 >
-                                    <div className="mt-1 text-gray-400 dark:text-gray-500">
-                                        <span className="material-symbols-outlined text-[20px]">code_blocks</span>
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center justify-between mb-1">
-                                            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate pr-2">
-                                                {project.projectName}
-                                            </p>
-                                            {taskCount > 0 && (
-                                                <span className="text-xs font-mono text-gray-500 bg-gray-100 dark:bg-[#2d333b] px-2 py-0.5 rounded border border-gray-200 dark:border-gray-700">
-                                                    {doneCount}/{taskCount}
-                                                </span>
-                                            )}
+                                    <Link to={`/project/${project.projectId}`} className="flex items-start gap-4 flex-1 min-w-0">
+                                        <div className="mt-1 text-gray-400 dark:text-gray-500">
+                                            <span className="material-symbols-outlined text-[20px]">code_blocks</span>
                                         </div>
-                                        <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
-                                            {project.description && (
-                                                <span className="truncate">{project.description}</span>
-                                            )}
-                                            {project.githubLink && (
-                                                <>
-                                                    <span>&bull;</span>
-                                                    <a
-                                                        href={project.githubLink}
-                                                        target="_blank"
-                                                        rel="noreferrer"
-                                                        className="flex items-center gap-1 hover:text-primary transition-colors"
-                                                    >
-                                                        <span className="material-symbols-outlined text-[14px]">link</span>
-                                                        GitHub
-                                                    </a>
-                                                </>
-                                            )}
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center justify-between mb-1">
+                                                <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate pr-2 group-hover:text-primary transition-colors">
+                                                    {project.projectName}
+                                                </p>
+                                                {taskCount > 0 && (
+                                                    <span className="text-xs font-mono text-gray-500 bg-gray-100 dark:bg-[#2d333b] px-2 py-0.5 rounded border border-gray-200 dark:border-gray-700">
+                                                        {doneCount}/{taskCount}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+                                                {project.description && (
+                                                    <span className="truncate">{project.description}</span>
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
+                                    </Link>
                                 </li>
                             );
                         })}

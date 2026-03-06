@@ -8,6 +8,8 @@ import { LoginCard } from './pages/LoginCard';
 import { RegisterCard } from './pages/RegisterCard';
 import { OAuthCallback } from './pages/OAuthCallback';
 import { Dashboard } from './pages/Dashboard';
+import { ProjectDetails } from './pages/ProjectDetails';
+import { Projects } from './pages/Projects';
 
 function App() {
     return (
@@ -22,6 +24,22 @@ function App() {
                         element={
                             <RequireAuth>
                                 <Dashboard />
+                            </RequireAuth>
+                        }
+                    />
+                    <Route
+                        path='/project/:id'
+                        element={
+                            <RequireAuth>
+                                <ProjectDetails />
+                            </RequireAuth>
+                        }
+                    />
+                    <Route
+                        path='/projects'
+                        element={
+                            <RequireAuth>
+                                <Projects />
                             </RequireAuth>
                         }
                     />
