@@ -17,19 +17,40 @@ export interface ProjectResponseDto {
     description: string;
     githubLink: string;
     sessions: number;
+    state: ProjectState;
     tasks: TaskResponseDto[];
 }
 
-export type TaskState = 'TODO' | 'IN_PROGRESS' | 'DONE';
-export type TaskImportance = 'LOW' | 'MEDIUM' | 'HIGH';
+export type ProjectState = 'PENDING' | 'IN_PROGRESS' | 'FINISHED';
+
+export interface ProjectRequestDto {
+    projectName: string;
+    description?: string;
+    githubLink?: string;
+    sessions?: number;
+    state?: ProjectState;
+}
+
+export type TaskState = 'PENDING' | 'IN_PROGRESS' | 'FINISHED';
+export type TaskImportance = 'NORMAL' | 'MEDIUM' | 'IMPORTANT' | 'CRUCIAL';
 
 export interface TaskResponseDto {
     id: number;
     taskName: string;
     projectId: number;
     description: string;
+    duration: number;
     state: TaskState;
     importance: TaskImportance;
+}
+
+export interface TaskRequestDto {
+    taskName: string;
+    projectId: number;
+    description?: string;
+    duration?: number;
+    state?: TaskState;
+    importance?: TaskImportance;
 }
 
 export type HabitType = 'DAILY' | 'WEEKLY' | 'MONTHLY';
