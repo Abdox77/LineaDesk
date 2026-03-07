@@ -4,6 +4,12 @@ export interface ApiResponse<T> {
     data: T;
 }
 
+export interface ExceptionResponse {
+    success: boolean;
+    message: string;
+    data?: Record<string, string>;
+}
+
 export interface LoginResponse {
     id: number;
     email: string;
@@ -42,6 +48,10 @@ export interface TaskResponseDto {
     duration: number;
     state: TaskState;
     importance: TaskImportance;
+    sortOrder: number;
+    dueDate: string | null;
+    parentTaskId: number | null;
+    subtasks: TaskResponseDto[];
 }
 
 export interface TaskRequestDto {
@@ -51,6 +61,19 @@ export interface TaskRequestDto {
     duration?: number;
     state?: TaskState;
     importance?: TaskImportance;
+    sortOrder?: number;
+    dueDate?: string | null;
+    parentTaskId?: number | null;
+}
+
+export interface TaskReorderItem {
+    id: number;
+    sortOrder: number;
+}
+
+export interface BulkTaskStateDto {
+    taskIds: number[];
+    state: TaskState;
 }
 
 export type HabitType = 'DAILY' | 'WEEKLY' | 'MONTHLY';
@@ -79,3 +102,25 @@ export interface JournalResponseDto {
     visibility: JournalVisibility;
     pages: PageResponseDto[];
 }
+
+export interface ActivityRequestDto {
+    activityType: ActivityType;
+    description?: string;
+}
+
+export interface ActivityResponseDto {
+    id: number;
+    activityType: ActivityType;
+    description: string;
+    timestamp: string;
+}
+
+export type ActivityType =
+    | 'task_created'
+    | 'task_updated'
+    | 'task_completed'
+    | 'task_deleted'
+    | 'project_created'
+    | 'project_updated'
+    | 'project_deleted'
+    | 'focus_session';

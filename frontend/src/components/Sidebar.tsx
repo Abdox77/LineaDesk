@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { DevHubLogo } from './DevHubLogo';
+import { useTheme } from './ThemeProvider'; // theme toggle
 
 interface SidebarProps {
     displayName?: string;
@@ -19,6 +20,7 @@ const settingsItems = [
 
 export function Sidebar({ displayName = 'My Space' }: SidebarProps) {
     const location = useLocation();
+    const { theme, toggleTheme } = useTheme();
 
     const handleSignOut = () => {
         localStorage.removeItem('token');
@@ -69,6 +71,19 @@ export function Sidebar({ displayName = 'My Space' }: SidebarProps) {
 
             {/* Bottom section */}
             <div className="mt-auto p-4 border-t border-border-light dark:border-border-dark">
+                {/* Theme toggle */}
+                <button
+                    onClick={toggleTheme}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-colors group text-gray-500 dark:text-text-secondary hover:bg-gray-100 dark:hover:bg-surface-dark-alt w-full mb-1"
+                >
+                    <span className="material-symbols-outlined text-[24px] group-hover:text-primary transition-colors">
+                        {theme === 'dark' ? 'light_mode' : 'dark_mode'}
+                    </span>
+                    <span className="text-sm hidden lg:block">
+                        {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+                    </span>
+                </button>
+
                 {settingsItems.map((item) => {
                     const active = isActive(item.href);
                     return (

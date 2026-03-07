@@ -36,8 +36,9 @@ export function EditProjectModal({ project, onSave, onClose }: EditProjectModalP
                 githubLink: githubLink.trim(),
                 state,
             });
-        } catch {
-            setError('Failed to update project');
+        } catch (err: any) {
+            const msg = err?.message || 'Failed to update project';
+            setError(msg);
             setSaving(false);
         }
     };

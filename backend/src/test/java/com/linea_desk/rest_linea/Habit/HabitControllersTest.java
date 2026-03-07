@@ -2,12 +2,13 @@ package com.linea_desk.rest_linea.Habit;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -35,6 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.linea_desk.rest_linea.Habit.Habit.HABIT_TYPE;
 import com.linea_desk.rest_linea.User.User;
+import com.linea_desk.rest_linea.common.exceptions.ResourceNotFoundException;
 import com.linea_desk.rest_linea.common.service.JwtService;
 import com.linea_desk.rest_linea.config.ApplicationConfiguration;
 import com.linea_desk.rest_linea.config.GithubOAuthSuccessHandler;
@@ -89,7 +91,7 @@ class HabitControllersTest {
     @WithMockUser
     void createNewHabit_Success() throws Exception {
         when(habitServices.createNewHabit(any(HabitRequestDto.class), any(User.class)))
-                .thenReturn(Optional.of(habitResponse));
+                .thenReturn(habitResponse);
 
         mockMvc.perform(post("/api/habit")
                         .with(csrf())
@@ -102,22 +104,6 @@ class HabitControllersTest {
                 .andExpect(jsonPath("$.data.habitName").value("Morning Run"))
                 .andExpect(jsonPath("$.data.type").value("FITNESS"))
                 .andExpect(jsonPath("$.data.streaks").value(5));
-    }
-
-    @Test
-    @WithMockUser
-    void createNewHabit_ServiceReturnsEmpty_ReturnsInternalServerError() throws Exception {
-        when(habitServices.createNewHabit(any(HabitRequestDto.class), any(User.class)))
-                .thenReturn(Optional.empty());
-
-        mockMvc.perform(post("/api/habit")
-                        .with(csrf())
-                        .with(user(testUser))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(habitRequest)))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Internal Server Error"));
     }
 
     @Test
@@ -140,7 +126,7 @@ class HabitControllersTest {
     @WithMockUser
     void getHabitById_Success() throws Exception {
         when(habitServices.getHabitById(eq(1L), any(User.class)))
-                .thenReturn(Optional.of(habitResponse));
+                .thenReturn(habitResponse);
 
         mockMvc.perform(get("/api/habit/1")
                         .with(user(testUser)))
@@ -154,13 +140,12 @@ class HabitControllersTest {
     @WithMockUser
     void getHabitById_NotFound() throws Exception {
         when(habitServices.getHabitById(eq(999L), any(User.class)))
-                .thenReturn(Optional.empty());
+                .thenThrow(new ResourceNotFoundException("Habit", 999L));
 
         mockMvc.perform(get("/api/habit/999")
                         .with(user(testUser)))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Habit not found"));
+                .andExpect(jsonPath("$.success").value(false));
     }
 
     @Test
@@ -186,7 +171,7 @@ class HabitControllersTest {
 
         Collection<HabitResponseDto> habits = List.of(habitResponse, habit2);
         when(habitServices.getAllHabitsForUser(any(User.class)))
-                .thenReturn(Optional.of(habits));
+                .thenReturn(habits);
 
         mockMvc.perform(get("/api/habits")
                         .with(user(testUser)))
@@ -194,19 +179,6 @@ class HabitControllersTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Habits list retrieved successfully"))
                 .andExpect(jsonPath("$.data.length()").value(2));
-    }
-
-    @Test
-    @WithMockUser
-    void getHabitsList_Empty_ReturnsNotFound() throws Exception {
-        when(habitServices.getAllHabitsForUser(any(User.class)))
-                .thenReturn(Optional.empty());
-
-        mockMvc.perform(get("/api/habits")
-                        .with(user(testUser)))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("No habits found for the user"));
     }
 
     @Test
@@ -231,7 +203,7 @@ class HabitControllersTest {
         updatedResponse.setStreaks(10);
 
         when(habitServices.updateHabit(eq(1L), any(HabitRequestDto.class), any(User.class)))
-                .thenReturn(Optional.of(updatedResponse));
+                .thenReturn(updatedResponse);
 
         HabitRequestDto updateRequest = new HabitRequestDto();
         updateRequest.setHabitName("Evening Run");
@@ -253,7 +225,7 @@ class HabitControllersTest {
     @WithMockUser
     void updateHabit_NotFound() throws Exception {
         when(habitServices.updateHabit(eq(999L), any(HabitRequestDto.class), any(User.class)))
-                .thenReturn(Optional.empty());
+                .thenThrow(new ResourceNotFoundException("Habit", 999L));
 
         mockMvc.perform(put("/api/habit/999")
                         .with(csrf())
@@ -261,8 +233,7 @@ class HabitControllersTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(habitRequest)))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Habit not found or inaccessible"));
+                .andExpect(jsonPath("$.success").value(false));
     }
 
     @Test
@@ -284,36 +255,32 @@ class HabitControllersTest {
     @Test
     @WithMockUser
     void deleteHabit_Success() throws Exception {
-        when(habitServices.deleteHabitById(eq(1L), any(User.class)))
-                .thenReturn(true);
+        doNothing().when(habitServices).deleteHabitById(eq(1L), any(User.class));
 
         mockMvc.perform(delete("/api/habit/1")
                         .with(csrf())
                         .with(user(testUser)))
-                .andExpect(status().isNoContent())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("Habit deleted successfully"));
+                .andExpect(status().isNoContent());
     }
 
     @Test
     @WithMockUser
     void deleteHabit_NotFound() throws Exception {
-        when(habitServices.deleteHabitById(eq(999L), any(User.class)))
-                .thenReturn(false);
+        doThrow(new ResourceNotFoundException("Habit", 999L))
+                .when(habitServices).deleteHabitById(eq(999L), any(User.class));
 
         mockMvc.perform(delete("/api/habit/999")
                         .with(csrf())
                         .with(user(testUser)))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Habit not found or inaccessible"));
+                .andExpect(jsonPath("$.success").value(false));
     }
 
     @Test
     @WithMockUser
     void deleteHabit_ServiceThrowsException_ReturnsInternalServerError() throws Exception {
-        when(habitServices.deleteHabitById(eq(1L), any(User.class)))
-                .thenThrow(new RuntimeException("DB error"));
+        doThrow(new RuntimeException("DB error"))
+                .when(habitServices).deleteHabitById(eq(1L), any(User.class));
 
         mockMvc.perform(delete("/api/habit/1")
                         .with(csrf())

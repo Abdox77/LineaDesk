@@ -6,6 +6,7 @@ import { fetchProjects, createProject, deleteProject } from '../api/endpoints';
 import type { ProjectResponseDto, ProjectRequestDto, ProjectState } from '../api/types';
 import { CreateProjectModal } from '../components/CreateProjectModal';
 import { logActivity } from '../api/activityTracker';
+import { useToast } from '../components/ToastProvider';
 
 const STATE_STYLES: Record<ProjectState, string> = {
     PENDING: 'bg-slate-500/15 text-slate-600 dark:text-slate-400 border-slate-500/30',
@@ -21,6 +22,7 @@ const STATE_LABELS: Record<ProjectState, string> = {
 
 export function Projects() {
     const { user } = useAuth();
+    const { showToast } = useToast();
     const displayName = user?.username ?? 'Developer';
 
     const [projects, setProjects] = useState<ProjectResponseDto[]>([]);
@@ -45,6 +47,7 @@ export function Projects() {
     const handleDelete = async (id: number) => {
         await deleteProject(id);
         logActivity('project_deleted');
+        showToast('Project deleted', 'warning');
         await loadProjects();
     };
 
@@ -190,6 +193,7 @@ export function Projects() {
                     onSave={async (data: ProjectRequestDto) => {
                         await createProject(data);
                         logActivity('project_created');
+                        showToast('Project created successfully');
                         setCreateModalOpen(false);
                         await loadProjects();
                     }}

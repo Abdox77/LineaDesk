@@ -22,6 +22,14 @@ api.interceptors.response.use(
             localStorage.removeItem('token');
             window.location.href = '/login';
         }
+
+        // Extract structured error message from backend ExceptionResponse
+        const data = error.response?.data;
+        if (data?.message) {
+            error.message = data.message;
+            error.fieldErrors = data.data; // validation field errors map
+        }
+
         return Promise.reject(error);
     },
 );

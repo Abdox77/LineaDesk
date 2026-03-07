@@ -1,91 +1,74 @@
 package com.linea_desk.rest_linea.Project;
 
-import java.util.Optional;
-import lombok.extern.log4j.Log4j2;
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.LogManager;
-import org.springframework.stereotype.Service;
 import java.util.Collection;
+import java.util.Optional;
+
+import org.springframework.stereotype.Service;
 
 import com.linea_desk.rest_linea.User.User;
+import com.linea_desk.rest_linea.common.exceptions.DuplicateResourceException;
+import com.linea_desk.rest_linea.common.exceptions.ResourceNotFoundException;
+import com.linea_desk.rest_linea.common.exceptions.UnauthorizedAccessException;
 
-@Log4j2
 @Service
 public class ProjectServices {
     private final ProjectRepository projectRepository;
-    private static final Logger log = LogManager.getLogger(ProjectServices.class);
 
     public ProjectServices(ProjectRepository projectRepository) {
         this.projectRepository = projectRepository;
     }
 
-    public Optional<ProjectResponseDto> createNewProject(ProjectRequestDto req, User user) {
+    public ProjectResponseDto createNewProject(ProjectRequestDto req, User user) {
+        Optional<Project> existing = projectRepository.findByProjectName(req.getProjectName());
+        if (existing.isPresent()) {
+            throw new DuplicateResourceException("Project", "name", req.getProjectName());
+        }
+
         Project project = new Project();
-        /*
-            here i should check for whether the project exists or not
-            and i should throw customized exception
-
-        */
-
         project.setProjectName(req.getProjectName());
         project.setDescription(req.getDescription());
-        if(req.getGithubLink() != null) {
+        if (req.getGithubLink() != null) {
             project.setGithubLink(req.getGithubLink());
         }
         project.setUser(user);
         projectRepository.save(project);
-        return Optional.of(new ProjectResponseDto(project));
+        return new ProjectResponseDto(project);
     }
 
-    public Optional<ProjectResponseDto> getProjectById(Long id, User user) {
-        Optional<Project> project = projectRepository.findByIdWithTasks(id);
-
-        if (project.isEmpty()) {
-            return Optional.empty();
-        }
-
-        if (!project.get().getUser().getUserId().equals(user.getUserId())) {
-            return Optional.empty();
-        }
-        return Optional.of(new ProjectResponseDto(project.get()));
-    }
-
-    public boolean deleteProjectById(Long id, User user) {
-        Optional<Project> projectOpt = projectRepository.findById(id);
-
-        if (projectOpt.isEmpty()) {
-            return false;
-        }
-
-        Project project = projectOpt.get();
+    public ProjectResponseDto getProjectById(Long id, User user) {
+        Project project = projectRepository.findByIdWithTasks(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Project", id));
 
         if (!project.getUser().getUserId().equals(user.getUserId())) {
-            return false;
+            throw new UnauthorizedAccessException();
+        }
+        return new ProjectResponseDto(project);
+    }
+
+    public void deleteProjectById(Long id, User user) {
+        Project project = projectRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Project", id));
+
+        if (!project.getUser().getUserId().equals(user.getUserId())) {
+            throw new UnauthorizedAccessException();
         }
 
         projectRepository.delete(project);
-        return true;
     }
 
-    public Optional<Collection<ProjectResponseDto>> getAllProjectsForUser(User user) {
+    public Collection<ProjectResponseDto> getAllProjectsForUser(User user) {
         Collection<Project> projects = projectRepository.findAllByUserWithTasks(user);
-        Collection<ProjectResponseDto> responseDtos = projects.stream()
+        return projects.stream()
                 .map(ProjectResponseDto::new)
                 .toList();
-        return Optional.of(responseDtos);
     }
 
-    public Optional<ProjectResponseDto> updateProject(Long id, ProjectRequestDto req, User user) {
-        Optional<Project> projectOpt = projectRepository.findByIdWithTasks(id);
-
-        if (projectOpt.isEmpty()) {
-            return Optional.empty();
-        }
-
-        Project project = projectOpt.get();
+    public ProjectResponseDto updateProject(Long id, ProjectRequestDto req, User user) {
+        Project project = projectRepository.findByIdWithTasks(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Project", id));
 
         if (!project.getUser().getUserId().equals(user.getUserId())) {
-            return Optional.empty();
+            throw new UnauthorizedAccessException();
         }
 
         if (req.getProjectName() != null && !req.getProjectName().trim().isEmpty()) {
@@ -105,6 +88,6 @@ public class ProjectServices {
         }
 
         projectRepository.save(project);
-        return Optional.of(new ProjectResponseDto(project));
+        return new ProjectResponseDto(project);
     }
 }

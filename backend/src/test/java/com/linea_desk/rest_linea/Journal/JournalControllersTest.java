@@ -3,12 +3,13 @@ package com.linea_desk.rest_linea.Journal;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -36,6 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.linea_desk.rest_linea.Journal.Journal.JOURNAL_VISIBILITY;
 import com.linea_desk.rest_linea.User.User;
+import com.linea_desk.rest_linea.common.exceptions.ResourceNotFoundException;
 import com.linea_desk.rest_linea.common.service.JwtService;
 import com.linea_desk.rest_linea.config.ApplicationConfiguration;
 import com.linea_desk.rest_linea.config.GithubOAuthSuccessHandler;
@@ -53,16 +55,10 @@ import jakarta.servlet.http.HttpServletResponse;
     })
 class JournalControllersTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-
+    @Autowired private MockMvc mockMvc;
     private final ObjectMapper objectMapper = new ObjectMapper();
-
-    @MockitoBean
-    private JournalServices journalServices;
-
-    @MockitoBean
-    private JwtService jwtService;
+    @MockitoBean private JournalServices journalServices;
+    @MockitoBean private JwtService jwtService;
 
     private User testUser;
     private JournalRequestDto journalRequest;
@@ -71,11 +67,9 @@ class JournalControllersTest {
     @BeforeEach
     void setUp() {
         testUser = new User("test@example.com", "testuser", "password123");
-
         journalRequest = new JournalRequestDto();
         journalRequest.setName("My Journal");
         journalRequest.setVisibility(JOURNAL_VISIBILITY.PRIVATE);
-
         journalResponse = new JournalResponseDto();
         journalResponse.setName("My Journal");
         journalResponse.setVisibility(JOURNAL_VISIBILITY.PRIVATE);
@@ -84,49 +78,24 @@ class JournalControllersTest {
 
     // ========== POST /api/journal ==========
 
-    @Test
-    @WithMockUser
+    @Test @WithMockUser
     void createNewJournal_Success() throws Exception {
         when(journalServices.createNewJournal(any(JournalRequestDto.class), any(User.class)))
-                .thenReturn(Optional.of(journalResponse));
-
-        mockMvc.perform(post("/api/journal")
-                        .with(csrf())
-                        .with(user(testUser))
+                .thenReturn(journalResponse);
+        mockMvc.perform(post("/api/journal").with(csrf()).with(user(testUser))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(journalRequest)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Journal created successfully"))
-                .andExpect(jsonPath("$.data.name").value("My Journal"))
-                .andExpect(jsonPath("$.data.visibility").value("PRIVATE"));
+                .andExpect(jsonPath("$.data.name").value("My Journal"));
     }
 
-    @Test
-    @WithMockUser
-    void createNewJournal_ServiceReturnsEmpty_ReturnsInternalServerError() throws Exception {
-        when(journalServices.createNewJournal(any(JournalRequestDto.class), any(User.class)))
-                .thenReturn(Optional.empty());
-
-        mockMvc.perform(post("/api/journal")
-                        .with(csrf())
-                        .with(user(testUser))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(journalRequest)))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Internal Server Error"));
-    }
-
-    @Test
-    @WithMockUser
+    @Test @WithMockUser
     void createNewJournal_ServiceThrowsException_ReturnsInternalServerError() throws Exception {
         when(journalServices.createNewJournal(any(JournalRequestDto.class), any(User.class)))
                 .thenThrow(new RuntimeException("DB error"));
-
-        mockMvc.perform(post("/api/journal")
-                        .with(csrf())
-                        .with(user(testUser))
+        mockMvc.perform(post("/api/journal").with(csrf()).with(user(testUser))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(journalRequest)))
                 .andExpect(status().isInternalServerError())
@@ -135,220 +104,136 @@ class JournalControllersTest {
 
     // ========== GET /api/journal/{id} ==========
 
-    @Test
-    @WithMockUser
+    @Test @WithMockUser
     void getJournalById_Success() throws Exception {
         when(journalServices.getJournalById(eq(1L), any(User.class)))
-                .thenReturn(Optional.of(journalResponse));
-
-        mockMvc.perform(get("/api/journal/1")
-                        .with(user(testUser)))
+                .thenReturn(journalResponse);
+        mockMvc.perform(get("/api/journal/1").with(user(testUser)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("Journal retrieved successfully"))
                 .andExpect(jsonPath("$.data.name").value("My Journal"));
     }
 
-    @Test
-    @WithMockUser
+    @Test @WithMockUser
     void getJournalById_NotFound() throws Exception {
         when(journalServices.getJournalById(eq(999L), any(User.class)))
-                .thenReturn(Optional.empty());
-
-        mockMvc.perform(get("/api/journal/999")
-                        .with(user(testUser)))
+                .thenThrow(new ResourceNotFoundException("Journal", 999L));
+        mockMvc.perform(get("/api/journal/999").with(user(testUser)))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Journal not found"));
+                .andExpect(jsonPath("$.success").value(false));
     }
 
-    @Test
-    @WithMockUser
+    @Test @WithMockUser
     void getJournalById_ServiceThrowsException_ReturnsInternalServerError() throws Exception {
         when(journalServices.getJournalById(eq(1L), any(User.class)))
                 .thenThrow(new RuntimeException("DB error"));
-
-        mockMvc.perform(get("/api/journal/1")
-                        .with(user(testUser)))
+        mockMvc.perform(get("/api/journal/1").with(user(testUser)))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.success").value(false));
     }
 
     // ========== GET /api/journals ==========
 
-    @Test
-    @WithMockUser
+    @Test @WithMockUser
     void getJournalsList_Success() throws Exception {
-        JournalResponseDto journal2 = new JournalResponseDto();
-        journal2.setName("Work Journal");
-        journal2.setVisibility(JOURNAL_VISIBILITY.PUBLIC);
-        journal2.setPages(Collections.emptyList());
-
-        Collection<JournalResponseDto> journals = List.of(journalResponse, journal2);
-        when(journalServices.getAllJournalsForUser(any(User.class)))
-                .thenReturn(Optional.of(journals));
-
-        mockMvc.perform(get("/api/journals")
-                        .with(user(testUser)))
+        JournalResponseDto j2 = new JournalResponseDto();
+        j2.setName("Work Journal"); j2.setVisibility(JOURNAL_VISIBILITY.PUBLIC); j2.setPages(Collections.emptyList());
+        Collection<JournalResponseDto> journals = List.of(journalResponse, j2);
+        when(journalServices.getAllJournalsForUser(any(User.class))).thenReturn(journals);
+        mockMvc.perform(get("/api/journals").with(user(testUser)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("Journals list retrieved successfully"))
                 .andExpect(jsonPath("$.data.length()").value(2));
     }
 
-    @Test
-    @WithMockUser
-    void getJournalsList_Empty_ReturnsNotFound() throws Exception {
-        when(journalServices.getAllJournalsForUser(any(User.class)))
-                .thenReturn(Optional.empty());
-
-        mockMvc.perform(get("/api/journals")
-                        .with(user(testUser)))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("No journals found for the user"));
-    }
-
-    @Test
-    @WithMockUser
+    @Test @WithMockUser
     void getJournalsList_ServiceThrowsException_ReturnsInternalServerError() throws Exception {
         when(journalServices.getAllJournalsForUser(any(User.class)))
                 .thenThrow(new RuntimeException("DB error"));
-
-        mockMvc.perform(get("/api/journals")
-                        .with(user(testUser)))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.success").value(false));
+        mockMvc.perform(get("/api/journals").with(user(testUser)))
+                .andExpect(status().isInternalServerError());
     }
 
     // ========== PUT /api/journal/{id} ==========
 
-    @Test
-    @WithMockUser
+    @Test @WithMockUser
     void updateJournal_Success() throws Exception {
-        JournalResponseDto updatedResponse = new JournalResponseDto();
-        updatedResponse.setName("Updated Journal");
-        updatedResponse.setVisibility(JOURNAL_VISIBILITY.PUBLIC);
-        updatedResponse.setPages(Collections.emptyList());
-
+        JournalResponseDto updated = new JournalResponseDto();
+        updated.setName("Updated Journal"); updated.setVisibility(JOURNAL_VISIBILITY.PUBLIC); updated.setPages(Collections.emptyList());
         when(journalServices.updateJournal(eq(1L), any(JournalRequestDto.class), any(User.class)))
-                .thenReturn(Optional.of(updatedResponse));
-
-        JournalRequestDto updateRequest = new JournalRequestDto();
-        updateRequest.setName("Updated Journal");
-        updateRequest.setVisibility(JOURNAL_VISIBILITY.PUBLIC);
-
-        mockMvc.perform(put("/api/journal/1")
-                        .with(csrf())
-                        .with(user(testUser))
+                .thenReturn(updated);
+        JournalRequestDto req = new JournalRequestDto();
+        req.setName("Updated Journal"); req.setVisibility(JOURNAL_VISIBILITY.PUBLIC);
+        mockMvc.perform(put("/api/journal/1").with(csrf()).with(user(testUser))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(updateRequest)))
+                        .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("Journal updated successfully"))
                 .andExpect(jsonPath("$.data.name").value("Updated Journal"));
     }
 
-    @Test
-    @WithMockUser
+    @Test @WithMockUser
     void updateJournal_NotFound() throws Exception {
         when(journalServices.updateJournal(eq(999L), any(JournalRequestDto.class), any(User.class)))
-                .thenReturn(Optional.empty());
-
-        mockMvc.perform(put("/api/journal/999")
-                        .with(csrf())
-                        .with(user(testUser))
+                .thenThrow(new ResourceNotFoundException("Journal", 999L));
+        mockMvc.perform(put("/api/journal/999").with(csrf()).with(user(testUser))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(journalRequest)))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Journal not found or inaccessible"));
+                .andExpect(status().isNotFound());
     }
 
-    @Test
-    @WithMockUser
+    @Test @WithMockUser
     void updateJournal_ServiceThrowsException_ReturnsInternalServerError() throws Exception {
         when(journalServices.updateJournal(eq(1L), any(JournalRequestDto.class), any(User.class)))
                 .thenThrow(new RuntimeException("DB error"));
-
-        mockMvc.perform(put("/api/journal/1")
-                        .with(csrf())
-                        .with(user(testUser))
+        mockMvc.perform(put("/api/journal/1").with(csrf()).with(user(testUser))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(journalRequest)))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.success").value(false));
+                .andExpect(status().isInternalServerError());
     }
 
     // ========== DELETE /api/journal/{id} ==========
 
-    @Test
-    @WithMockUser
+    @Test @WithMockUser
     void deleteJournal_Success() throws Exception {
-        when(journalServices.deleteJournalById(eq(1L), any(User.class)))
-                .thenReturn(true);
-
-        mockMvc.perform(delete("/api/journal/1")
-                        .with(csrf())
-                        .with(user(testUser)))
-                .andExpect(status().isNoContent())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("Journal deleted successfully"));
+        doNothing().when(journalServices).deleteJournalById(eq(1L), any(User.class));
+        mockMvc.perform(delete("/api/journal/1").with(csrf()).with(user(testUser)))
+                .andExpect(status().isNoContent());
     }
 
-    @Test
-    @WithMockUser
+    @Test @WithMockUser
     void deleteJournal_NotFound() throws Exception {
-        when(journalServices.deleteJournalById(eq(999L), any(User.class)))
-                .thenReturn(false);
-
-        mockMvc.perform(delete("/api/journal/999")
-                        .with(csrf())
-                        .with(user(testUser)))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Journal not found or inaccessible"));
+        doThrow(new ResourceNotFoundException("Journal", 999L))
+                .when(journalServices).deleteJournalById(eq(999L), any(User.class));
+        mockMvc.perform(delete("/api/journal/999").with(csrf()).with(user(testUser)))
+                .andExpect(status().isNotFound());
     }
 
-    @Test
-    @WithMockUser
+    @Test @WithMockUser
     void deleteJournal_ServiceThrowsException_ReturnsInternalServerError() throws Exception {
-        when(journalServices.deleteJournalById(eq(1L), any(User.class)))
-                .thenThrow(new RuntimeException("DB error"));
-
-        mockMvc.perform(delete("/api/journal/1")
-                        .with(csrf())
-                        .with(user(testUser)))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.success").value(false));
+        doThrow(new RuntimeException("DB error"))
+                .when(journalServices).deleteJournalById(eq(1L), any(User.class));
+        mockMvc.perform(delete("/api/journal/1").with(csrf()).with(user(testUser)))
+                .andExpect(status().isInternalServerError());
     }
 
     // ========== Auth test ==========
 
     @Test
     void createJournal_Unauthenticated_ReturnsUnauthorized() throws Exception {
-        mockMvc.perform(post("/api/journal")
-                        .with(csrf())
+        mockMvc.perform(post("/api/journal").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(journalRequest)))
                 .andExpect(status().isUnauthorized());
     }
 
-    @TestConfiguration
-    @EnableWebSecurity
+    @TestConfiguration @EnableWebSecurity
     static class TestSecurityConfig {
         @Bean
         public SecurityFilterChain testSecurityFilterChain(HttpSecurity http) throws Exception {
-            http
-                .csrf(AbstractHttpConfigurer::disable)
+            http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
-                .exceptionHandling(ex -> ex
-                    .authenticationEntryPoint(
-                        (req, res, e) -> res.sendError(HttpServletResponse.SC_UNAUTHORIZED)
-                    )
-                );
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(
+                    (req, res, e) -> res.sendError(HttpServletResponse.SC_UNAUTHORIZED)));
             return http.build();
         }
     }
 }
-

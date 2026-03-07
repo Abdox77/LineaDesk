@@ -27,8 +27,9 @@ export function CreateProjectModal({ onSave, onClose }: CreateProjectModalProps)
                 description: description.trim(),
                 githubLink: githubLink.trim() || undefined,
             });
-        } catch {
-            setError('Failed to create project');
+        } catch (err: any) {
+            const msg = err?.message || 'Failed to create project';
+            setError(msg);
             setSaving(false);
         }
     };

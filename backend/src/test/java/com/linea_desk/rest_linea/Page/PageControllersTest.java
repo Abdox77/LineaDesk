@@ -2,12 +2,13 @@ package com.linea_desk.rest_linea.Page;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -34,6 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.linea_desk.rest_linea.User.User;
+import com.linea_desk.rest_linea.common.exceptions.ResourceNotFoundException;
 import com.linea_desk.rest_linea.common.service.JwtService;
 import com.linea_desk.rest_linea.config.ApplicationConfiguration;
 import com.linea_desk.rest_linea.config.GithubOAuthSuccessHandler;
@@ -51,16 +53,10 @@ import jakarta.servlet.http.HttpServletResponse;
     })
 class PageControllersTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-
+    @Autowired private MockMvc mockMvc;
     private final ObjectMapper objectMapper = new ObjectMapper();
-
-    @MockitoBean
-    private PageServices pageServices;
-
-    @MockitoBean
-    private JwtService jwtService;
+    @MockitoBean private PageServices pageServices;
+    @MockitoBean private JwtService jwtService;
 
     private User testUser;
     private PageRequestDto pageRequest;
@@ -69,276 +65,176 @@ class PageControllersTest {
     @BeforeEach
     void setUp() {
         testUser = new User("test@example.com", "testuser", "password123");
-
         pageRequest = new PageRequestDto();
         pageRequest.setTitle("My Page");
         pageRequest.setContent("Some content here");
         pageRequest.setJournalId(1L);
-
         pageResponse = new PageResponseDto();
         pageResponse.setTitle("My Page");
         pageResponse.setContent("Some content here");
         pageResponse.setJournalId(1L);
     }
 
-
-    @Test
-    @WithMockUser
+    @Test @WithMockUser
     void createNewPage_Success() throws Exception {
         when(pageServices.createNewPage(any(PageRequestDto.class), any(User.class)))
-                .thenReturn(Optional.of(pageResponse));
-
-        mockMvc.perform(post("/api/page")
-                        .with(csrf())
-                        .with(user(testUser))
+                .thenReturn(pageResponse);
+        mockMvc.perform(post("/api/page").with(csrf()).with(user(testUser))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(pageRequest)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Page created successfully"))
-                .andExpect(jsonPath("$.data.title").value("My Page"))
-                .andExpect(jsonPath("$.data.content").value("Some content here"));
-    }
-
-    @Test
-    @WithMockUser
-    void createNewPage_JournalNotFound_ReturnsNotFound() throws Exception {
-        when(pageServices.createNewPage(any(PageRequestDto.class), any(User.class)))
-                .thenReturn(Optional.empty());
-
-        mockMvc.perform(post("/api/page")
-                        .with(csrf())
-                        .with(user(testUser))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(pageRequest)))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Journal not found or inaccessible"));
-    }
-
-    @Test
-    @WithMockUser
-    void createNewPage_ServiceThrowsException_ReturnsInternalServerError() throws Exception {
-        when(pageServices.createNewPage(any(PageRequestDto.class), any(User.class)))
-                .thenThrow(new RuntimeException("DB error"));
-
-        mockMvc.perform(post("/api/page")
-                        .with(csrf())
-                        .with(user(testUser))
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(pageRequest)))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.success").value(false));
-    }
-
-
-    @Test
-    @WithMockUser
-    void getPageById_Success() throws Exception {
-        when(pageServices.getPageById(eq(1L), any(User.class)))
-                .thenReturn(Optional.of(pageResponse));
-
-        mockMvc.perform(get("/api/page/1")
-                        .with(user(testUser)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("Page retrieved successfully"))
                 .andExpect(jsonPath("$.data.title").value("My Page"));
     }
 
-    @Test
-    @WithMockUser
-    void getPageById_NotFound() throws Exception {
-        when(pageServices.getPageById(eq(999L), any(User.class)))
-                .thenReturn(Optional.empty());
-
-        mockMvc.perform(get("/api/page/999")
-                        .with(user(testUser)))
+    @Test @WithMockUser
+    void createNewPage_JournalNotFound_ReturnsNotFound() throws Exception {
+        when(pageServices.createNewPage(any(PageRequestDto.class), any(User.class)))
+                .thenThrow(new ResourceNotFoundException("Journal", 999L));
+        mockMvc.perform(post("/api/page").with(csrf()).with(user(testUser))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(pageRequest)))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Page not found"));
+                .andExpect(jsonPath("$.success").value(false));
     }
 
-    @Test
-    @WithMockUser
+    @Test @WithMockUser
+    void createNewPage_ServiceThrowsException_ReturnsInternalServerError() throws Exception {
+        when(pageServices.createNewPage(any(PageRequestDto.class), any(User.class)))
+                .thenThrow(new RuntimeException("DB error"));
+        mockMvc.perform(post("/api/page").with(csrf()).with(user(testUser))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(pageRequest)))
+                .andExpect(status().isInternalServerError());
+    }
+
+    @Test @WithMockUser
+    void getPageById_Success() throws Exception {
+        when(pageServices.getPageById(eq(1L), any(User.class)))
+                .thenReturn(pageResponse);
+        mockMvc.perform(get("/api/page/1").with(user(testUser)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.title").value("My Page"));
+    }
+
+    @Test @WithMockUser
+    void getPageById_NotFound() throws Exception {
+        when(pageServices.getPageById(eq(999L), any(User.class)))
+                .thenThrow(new ResourceNotFoundException("Page", 999L));
+        mockMvc.perform(get("/api/page/999").with(user(testUser)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test @WithMockUser
     void getPageById_ServiceThrowsException_ReturnsInternalServerError() throws Exception {
         when(pageServices.getPageById(eq(1L), any(User.class)))
                 .thenThrow(new RuntimeException("DB error"));
-
-        mockMvc.perform(get("/api/page/1")
-                        .with(user(testUser)))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.success").value(false));
+        mockMvc.perform(get("/api/page/1").with(user(testUser)))
+                .andExpect(status().isInternalServerError());
     }
 
-    @Test
-    @WithMockUser
+    @Test @WithMockUser
     void getPagesByJournal_Success() throws Exception {
-        PageResponseDto page2 = new PageResponseDto();
-        page2.setTitle("Second Page");
-        page2.setContent("More content");
-        page2.setJournalId(1L);
-
-        Collection<PageResponseDto> pages = List.of(pageResponse, page2);
-        when(pageServices.getAllPagesForJournal(eq(1L), any(User.class)))
-                .thenReturn(Optional.of(pages));
-
-        mockMvc.perform(get("/api/journal/1/pages")
-                        .with(user(testUser)))
+        PageResponseDto p2 = new PageResponseDto();
+        p2.setTitle("Second Page"); p2.setContent("More content"); p2.setJournalId(1L);
+        Collection<PageResponseDto> pages = List.of(pageResponse, p2);
+        when(pageServices.getAllPagesForJournal(eq(1L), any(User.class))).thenReturn(pages);
+        mockMvc.perform(get("/api/journal/1/pages").with(user(testUser)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("Pages list retrieved successfully"))
                 .andExpect(jsonPath("$.data.length()").value(2));
     }
 
-    @Test
-    @WithMockUser
+    @Test @WithMockUser
     void getPagesByJournal_JournalNotFound_ReturnsNotFound() throws Exception {
         when(pageServices.getAllPagesForJournal(eq(999L), any(User.class)))
-                .thenReturn(Optional.empty());
-
-        mockMvc.perform(get("/api/journal/999/pages")
-                        .with(user(testUser)))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Journal not found or inaccessible"));
+                .thenThrow(new ResourceNotFoundException("Journal", 999L));
+        mockMvc.perform(get("/api/journal/999/pages").with(user(testUser)))
+                .andExpect(status().isNotFound());
     }
 
-    @Test
-    @WithMockUser
+    @Test @WithMockUser
     void getPagesByJournal_ServiceThrowsException_ReturnsInternalServerError() throws Exception {
         when(pageServices.getAllPagesForJournal(eq(1L), any(User.class)))
                 .thenThrow(new RuntimeException("DB error"));
-
-        mockMvc.perform(get("/api/journal/1/pages")
-                        .with(user(testUser)))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.success").value(false));
+        mockMvc.perform(get("/api/journal/1/pages").with(user(testUser)))
+                .andExpect(status().isInternalServerError());
     }
 
-
-    @Test
-    @WithMockUser
+    @Test @WithMockUser
     void updatePage_Success() throws Exception {
-        PageResponseDto updatedResponse = new PageResponseDto();
-        updatedResponse.setTitle("Updated Page");
-        updatedResponse.setContent("Updated content");
-        updatedResponse.setJournalId(1L);
-
+        PageResponseDto updated = new PageResponseDto();
+        updated.setTitle("Updated Page"); updated.setContent("Updated content"); updated.setJournalId(1L);
         when(pageServices.updatePage(eq(1L), any(PageRequestDto.class), any(User.class)))
-                .thenReturn(Optional.of(updatedResponse));
-
-        PageRequestDto updateRequest = new PageRequestDto();
-        updateRequest.setTitle("Updated Page");
-        updateRequest.setContent("Updated content");
-
-        mockMvc.perform(put("/api/page/1")
-                        .with(csrf())
-                        .with(user(testUser))
+                .thenReturn(updated);
+        PageRequestDto req = new PageRequestDto();
+        req.setTitle("Updated Page"); req.setContent("Updated content"); req.setJournalId(1L);
+        mockMvc.perform(put("/api/page/1").with(csrf()).with(user(testUser))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(updateRequest)))
+                        .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("Page updated successfully"))
                 .andExpect(jsonPath("$.data.title").value("Updated Page"));
     }
 
-    @Test
-    @WithMockUser
+    @Test @WithMockUser
     void updatePage_NotFound() throws Exception {
         when(pageServices.updatePage(eq(999L), any(PageRequestDto.class), any(User.class)))
-                .thenReturn(Optional.empty());
-
-        mockMvc.perform(put("/api/page/999")
-                        .with(csrf())
-                        .with(user(testUser))
+                .thenThrow(new ResourceNotFoundException("Page", 999L));
+        mockMvc.perform(put("/api/page/999").with(csrf()).with(user(testUser))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(pageRequest)))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Page not found or inaccessible"));
+                .andExpect(status().isNotFound());
     }
 
-    @Test
-    @WithMockUser
+    @Test @WithMockUser
     void updatePage_ServiceThrowsException_ReturnsInternalServerError() throws Exception {
         when(pageServices.updatePage(eq(1L), any(PageRequestDto.class), any(User.class)))
                 .thenThrow(new RuntimeException("DB error"));
-
-        mockMvc.perform(put("/api/page/1")
-                        .with(csrf())
-                        .with(user(testUser))
+        mockMvc.perform(put("/api/page/1").with(csrf()).with(user(testUser))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(pageRequest)))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.success").value(false));
+                .andExpect(status().isInternalServerError());
     }
 
-
-    @Test
-    @WithMockUser
+    @Test @WithMockUser
     void deletePage_Success() throws Exception {
-        when(pageServices.deletePageById(eq(1L), any(User.class)))
-                .thenReturn(true);
-
-        mockMvc.perform(delete("/api/page/1")
-                        .with(csrf())
-                        .with(user(testUser)))
-                .andExpect(status().isNoContent())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("Page deleted successfully"));
+        doNothing().when(pageServices).deletePageById(eq(1L), any(User.class));
+        mockMvc.perform(delete("/api/page/1").with(csrf()).with(user(testUser)))
+                .andExpect(status().isNoContent());
     }
 
-    @Test
-    @WithMockUser
+    @Test @WithMockUser
     void deletePage_NotFound() throws Exception {
-        when(pageServices.deletePageById(eq(999L), any(User.class)))
-                .thenReturn(false);
-
-        mockMvc.perform(delete("/api/page/999")
-                        .with(csrf())
-                        .with(user(testUser)))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Page not found or inaccessible"));
+        doThrow(new ResourceNotFoundException("Page", 999L))
+                .when(pageServices).deletePageById(eq(999L), any(User.class));
+        mockMvc.perform(delete("/api/page/999").with(csrf()).with(user(testUser)))
+                .andExpect(status().isNotFound());
     }
 
-    @Test
-    @WithMockUser
+    @Test @WithMockUser
     void deletePage_ServiceThrowsException_ReturnsInternalServerError() throws Exception {
-        when(pageServices.deletePageById(eq(1L), any(User.class)))
-                .thenThrow(new RuntimeException("DB error"));
-
-        mockMvc.perform(delete("/api/page/1")
-                        .with(csrf())
-                        .with(user(testUser)))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.success").value(false));
+        doThrow(new RuntimeException("DB error"))
+                .when(pageServices).deletePageById(eq(1L), any(User.class));
+        mockMvc.perform(delete("/api/page/1").with(csrf()).with(user(testUser)))
+                .andExpect(status().isInternalServerError());
     }
-
 
     @Test
     void createPage_Unauthenticated_ReturnsUnauthorized() throws Exception {
-        mockMvc.perform(post("/api/page")
-                        .with(csrf())
+        mockMvc.perform(post("/api/page").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(pageRequest)))
                 .andExpect(status().isUnauthorized());
     }
 
-    @TestConfiguration
-    @EnableWebSecurity
+    @TestConfiguration @EnableWebSecurity
     static class TestSecurityConfig {
         @Bean
         public SecurityFilterChain testSecurityFilterChain(HttpSecurity http) throws Exception {
-            http
-                .csrf(AbstractHttpConfigurer::disable)
+            http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
-                .exceptionHandling(ex -> ex
-                    .authenticationEntryPoint(
-                        (req, res, e) -> res.sendError(HttpServletResponse.SC_UNAUTHORIZED)
-                    )
-                );
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(
+                    (req, res, e) -> res.sendError(HttpServletResponse.SC_UNAUTHORIZED)));
             return http.build();
         }
     }

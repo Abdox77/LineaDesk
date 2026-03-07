@@ -3,6 +3,8 @@ package com.linea_desk.rest_linea.Project;
 import java.util.Collection;
 import java.util.Collections;
 
+import org.hibernate.Hibernate;
+
 import com.linea_desk.rest_linea.Project.Project.PROJECT_STATE;
 import com.linea_desk.rest_linea.Task.TaskResponseDto;
 
@@ -37,7 +39,7 @@ public class ProjectResponseDto {
             this.sessions = project.getSessions();
         }
 
-        if (project.getTasks() == null) {
+        if (project.getTasks() == null || !Hibernate.isInitialized(project.getTasks())) {
             this.tasks = Collections.emptyList();
         }
         else {
