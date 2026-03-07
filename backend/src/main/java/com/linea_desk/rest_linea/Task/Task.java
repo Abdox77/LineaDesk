@@ -1,16 +1,23 @@
 package com.linea_desk.rest_linea.Task;
 
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+
 import com.linea_desk.rest_linea.Project.Project;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -63,6 +70,19 @@ public class Task
     @Column(columnDefinition="varchar(255) default 'PENDING'")
     private TASK_STATE state;
 
+    @Column(columnDefinition = "integer default 0")
+    private Integer sortOrder = 0;
+
+    @Column
+    private LocalDate dueDate;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_task_id")
+    private Task parentTask;
+
+    @OneToMany(mappedBy = "parentTask", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Task> subtasks = new ArrayList<>();
+
     public Task() { }
 
     public Task(String taskName) {
@@ -100,4 +120,16 @@ public class Task
             this.project = project;
         }
     }
+
+    public Integer getSortOrder() { return sortOrder; }
+    public void setSortOrder(Integer sortOrder) { this.sortOrder = sortOrder; }
+
+    public LocalDate getDueDate() { return dueDate; }
+    public void setDueDate(LocalDate dueDate) { this.dueDate = dueDate; }
+
+    public Task getParentTask() { return parentTask; }
+    public void setParentTask(Task parentTask) { this.parentTask = parentTask; }
+
+    public List<Task> getSubtasks() { return subtasks; }
+    public void setSubtasks(List<Task> subtasks) { this.subtasks = subtasks; }
 }

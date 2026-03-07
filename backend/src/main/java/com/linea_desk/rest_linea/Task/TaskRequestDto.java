@@ -1,6 +1,8 @@
 package com.linea_desk.rest_linea.Task;
 
 
+import java.time.LocalDate;
+
 import com.linea_desk.rest_linea.Task.Task.TASK_STATE;
 
 import jakarta.validation.constraints.Min;
@@ -24,6 +26,9 @@ public class TaskRequestDto {
     private String description;
     private TASK_STATE state;
     private Task.TASK_IMPORTANCE importance;
+    private Integer sortOrder;
+    private LocalDate dueDate;
+    private Long parentTaskId;
 
 
     public TaskRequestDto() { }
@@ -47,4 +52,13 @@ public class TaskRequestDto {
 
     public Task.TASK_IMPORTANCE getImportance() { return importance; }
     public void setImportance(Task.TASK_IMPORTANCE importance) { this.importance = importance; }
+
+    public Integer getSortOrder() { return sortOrder; }
+    public void setSortOrder(Integer sortOrder) { this.sortOrder = sortOrder; }
+
+    public LocalDate getDueDate() { return dueDate; }
+    public void setDueDate(LocalDate dueDate) { this.dueDate = dueDate; }
+
+    public Long getParentTaskId() { return parentTaskId; }
+    public void setParentTaskId(Long parentTaskId) { this.parentTaskId = parentTaskId; }
 }

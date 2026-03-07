@@ -6,6 +6,8 @@ import type {
     HabitResponseDto,
     TaskResponseDto,
     TaskRequestDto,
+    TaskReorderItem,
+    BulkTaskStateDto,
 } from './types';
 
 export async function fetchProjects(): Promise<ProjectResponseDto[]> {
@@ -44,6 +46,18 @@ export async function updateTask(id: number, req: Partial<TaskRequestDto>): Prom
 
 export async function deleteTask(id: number): Promise<void> {
     await api.delete(`/api/task/${id}`);
+}
+
+export async function reorderTasks(items: TaskReorderItem[]): Promise<void> {
+    await api.put('/api/tasks/reorder', items);
+}
+
+export async function bulkDeleteTasks(taskIds: number[]): Promise<void> {
+    await api.delete('/api/tasks/bulk', { data: taskIds });
+}
+
+export async function bulkUpdateTaskState(dto: BulkTaskStateDto): Promise<void> {
+    await api.put('/api/tasks/bulk-state', dto);
 }
 
 export async function fetchHabits(): Promise<HabitResponseDto[]> {

@@ -29,6 +29,7 @@ export function TaskModal({ projectId, task, defaultState, onSave, onClose }: Ta
     const [duration, setDuration] = useState(task?.duration ?? 0);
     const [state, setState] = useState<TaskState>(task?.state ?? defaultState);
     const [importance, setImportance] = useState<TaskImportance>(task?.importance ?? 'NORMAL');
+    const [dueDate, setDueDate] = useState(task?.dueDate ?? '');
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
 
@@ -48,9 +49,11 @@ export function TaskModal({ projectId, task, defaultState, onSave, onClose }: Ta
                 duration,
                 state,
                 importance,
+                dueDate: dueDate || null,
             });
-        } catch {
-            setError('Failed to save task');
+        } catch (err: any) {
+            const msg = err?.message || 'Failed to save task';
+            setError(msg);
             setSaving(false);
         }
     };
@@ -127,6 +130,16 @@ export function TaskModal({ projectId, task, defaultState, onSave, onClose }: Ta
                                 </select>
                             </div>
                         )}
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                        <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Due Date (optional)</label>
+                        <input
+                            type="date"
+                            className="form-input w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-[#0d1117] h-10 px-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                            value={dueDate}
+                            onChange={(e) => setDueDate(e.target.value)}
+                        />
                     </div>
 
                     <div className="flex flex-col gap-1.5">

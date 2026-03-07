@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { fetchProject, updateTask, updateProject } from '../api/endpoints';
-import type { ProjectResponseDto, TaskResponseDto, TaskState, TaskRequestDto } from '../api/types';
+import type { ProjectResponseDto, TaskResponseDto, TaskState } from '../api/types';
 import { logActivity } from '../api/activityTracker';
+import { useToast } from '../components/ToastProvider';
 
-/* ── Timer modes ── */
 const FOCUS_MINUTES = 25;
 const SHORT_BREAK_MINUTES = 5;
 const LONG_BREAK_MINUTES = 15;
@@ -26,6 +26,7 @@ function pad(n: number): string {
 export function FocusSession() {
     const { projectId } = useParams<{ projectId: string }>();
     const navigate = useNavigate();
+    const { showToast } = useToast();
 
     const [project, setProject] = useState<ProjectResponseDto | null>(null);
     const [loading, setLoading] = useState(true);
@@ -49,7 +50,6 @@ export function FocusSession() {
 
     const progressPct = totalSeconds > 0 ? ((totalSeconds - secondsLeft) / totalSeconds) * 100 : 0;
 
-    /* ── Load project ── */
     const loadProject = useCallback(async () => {
         if (!projectId) return;
         try {
@@ -69,7 +69,6 @@ export function FocusSession() {
     const activeTasks = (project?.tasks ?? []).filter(t => t.state !== 'FINISHED');
     const currentTask: TaskResponseDto | undefined = activeTasks[currentTaskIndex];
 
-    /* ── Timer logic ── */
     useEffect(() => {
         if (timerState === 'running') {
             intervalRef.current = setInterval(() => {
@@ -97,6 +96,7 @@ export function FocusSession() {
             const newCompleted = completedSessions + 1;
             setCompletedSessions(newCompleted);
             logActivity('focus_session');
+            showToast('Focus session completed! 🎯');
             // Increment project sessions
             if (project) {
                 updateProject(project.projectId, { sessions: (project.sessions ?? 0) + 1 }).catch(() => {});
@@ -188,12 +188,10 @@ export function FocusSession() {
         }
     };
 
-    /* ── Format time ── */
     const minutes = Math.floor(secondsLeft / 60);
     const seconds = secondsLeft % 60;
     const timeDisplay = `${pad(minutes)}:${pad(seconds)}`;
 
-    /* ── Loading ── */
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark">

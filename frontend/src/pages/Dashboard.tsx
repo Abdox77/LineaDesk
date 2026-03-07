@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Sidebar } from '../components/Sidebar';
 import { ActivityHeatmap } from '../components/ActivityHeatmap';
 import { useAuth } from '../auth/AuthContext';
@@ -7,9 +7,11 @@ import { fetchProjects, fetchHabits, createProject } from '../api/endpoints';
 import type { ProjectResponseDto, HabitResponseDto, ProjectRequestDto } from '../api/types';
 import { CreateProjectModal } from '../components/CreateProjectModal';
 import { logActivity } from '../api/activityTracker';
+import { useToast } from '../components/ToastProvider';
 
 export function Dashboard() {
     const { user } = useAuth();
+    const { showToast } = useToast();
     const displayName = user?.username ?? 'Developer';
 
     const [projects, setProjects] = useState<ProjectResponseDto[]>([]);
@@ -17,6 +19,7 @@ export function Dashboard() {
     const [loading, setLoading] = useState(true);
     const [createModalOpen, setCreateModalOpen] = useState(false);
     const [activityKey, setActivityKey] = useState(0);
+    const [scrollTrigger, setScrollTrigger] = useState(0);
 
     const loadData = async () => {
         try {
@@ -69,7 +72,10 @@ export function Dashboard() {
                             )}
                         </div>
                         <div className="flex gap-3">
-                            <button className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#2d333b] border border-border-light dark:border-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-all">
+                            <button
+                                onClick={() => setScrollTrigger((k) => k + 1)}
+                                className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#2d333b] border border-gray-200 dark:border-gray-700 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 shadow-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
+                            >
                                 <span className="material-symbols-outlined text-[18px]">calendar_today</span>
                                 This Month
                             </button>
@@ -83,7 +89,7 @@ export function Dashboard() {
                         </div>
                     </header>
 
-                    <ActivityHeatmap refreshKey={activityKey} />
+                    <ActivityHeatmap refreshKey={activityKey} scrollTrigger={scrollTrigger} />
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         <ProjectsCard projects={projects} loading={loading} />
@@ -93,6 +99,7 @@ export function Dashboard() {
                             totalTasks={totalTasks}
                             habits={habits}
                             loading={loading}
+                            projects={projects}
                         />
                     </div>
                 </div>
@@ -103,6 +110,7 @@ export function Dashboard() {
                     onSave={async (data: ProjectRequestDto) => {
                         await createProject(data);
                         logActivity('project_created');
+                        showToast('Project created successfully');
                         setCreateModalOpen(false);
                         setActivityKey((k) => k + 1);
                         await loadData();
@@ -210,9 +218,11 @@ interface DailyFocusProps {
     totalTasks: number;
     habits: HabitResponseDto[];
     loading: boolean;
+    projects: ProjectResponseDto[];
 }
 
-function DailyFocusCard({ doneTasks, totalTasks, habits, loading }: DailyFocusProps) {
+function DailyFocusCard({ doneTasks, totalTasks, habits, loading, projects }: DailyFocusProps) {
+    const navigate = useNavigate();
     const pct = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
     const circumference = 2 * Math.PI * 40;
     const offset = circumference - (pct / 100) * circumference;
@@ -306,9 +316,18 @@ function DailyFocusCard({ doneTasks, totalTasks, habits, loading }: DailyFocusPr
             </div>
 
             <div className="p-6 pt-0 mt-auto z-10">
-                <button className="w-full py-3 px-4 bg-primary hover:bg-sky-600 text-white font-semibold rounded-lg shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2">
+                <button
+                    onClick={() => {
+                        const activeProject = projects.find(p => p.state === 'IN_PROGRESS') ?? projects[0];
+                        if (activeProject) {
+                            navigate(`/focus/${activeProject.projectId}`);
+                        }
+                    }}
+                    disabled={projects.length === 0}
+                    className="w-full py-3 px-4 bg-primary hover:bg-sky-600 text-white font-semibold rounded-lg shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
                     <span className="material-symbols-outlined text-[20px]">play_arrow</span>
-                    Start Focus Session
+                    {projects.length === 0 ? 'Create a Project First' : 'Start Focus Session'}
                 </button>
             </div>
 

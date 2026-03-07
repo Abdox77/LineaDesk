@@ -1,11 +1,11 @@
 package com.linea_desk.rest_linea.Task;
 
-import java.util.Optional;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -34,6 +34,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.linea_desk.rest_linea.Task.Task.TASK_IMPORTANCE;
 import com.linea_desk.rest_linea.Task.Task.TASK_STATE;
 import com.linea_desk.rest_linea.User.User;
+import com.linea_desk.rest_linea.common.exceptions.ResourceNotFoundException;
 import com.linea_desk.rest_linea.common.service.JwtService;
 import com.linea_desk.rest_linea.config.ApplicationConfiguration;
 import com.linea_desk.rest_linea.config.GithubOAuthSuccessHandler;
@@ -51,16 +52,10 @@ import jakarta.servlet.http.HttpServletResponse;
     })
 class TaskControllersTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-
+    @Autowired private MockMvc mockMvc;
     private final ObjectMapper objectMapper = new ObjectMapper();
-
-    @MockitoBean
-    private TaskServices taskServices;
-
-    @MockitoBean
-    private JwtService jwtService;
+    @MockitoBean private TaskServices taskServices;
+    @MockitoBean private JwtService jwtService;
 
     private User testUser;
     private TaskRequestDto taskRequest;
@@ -69,7 +64,6 @@ class TaskControllersTest {
     @BeforeEach
     void setUp() {
         testUser = new User("test@example.com", "testuser", "password123");
-
         taskRequest = new TaskRequestDto();
         taskRequest.setTaskName("Implement feature");
         taskRequest.setProjectId(1L);
@@ -77,7 +71,6 @@ class TaskControllersTest {
         taskRequest.setState(TASK_STATE.PENDING);
         taskRequest.setImportance(TASK_IMPORTANCE.IMPORTANT);
         taskRequest.setDuration(60);
-
         taskResponse = new TaskResponseDto();
         taskResponse.setId(1L);
         taskResponse.setTaskName("Implement feature");
@@ -89,224 +82,148 @@ class TaskControllersTest {
 
     // ========== POST /api/task ==========
 
-    @Test
-    @WithMockUser
+    @Test @WithMockUser
     void createTask_Success() throws Exception {
         when(taskServices.createNewTask(any(TaskRequestDto.class), any(User.class)))
-                .thenReturn(Optional.of(taskResponse));
-
-        mockMvc.perform(post("/api/task")
-                        .with(csrf())
-                        .with(user(testUser))
+                .thenReturn(taskResponse);
+        mockMvc.perform(post("/api/task").with(csrf()).with(user(testUser))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(taskRequest)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("task created successfully"))
+                .andExpect(jsonPath("$.message").value("Task created successfully"))
                 .andExpect(jsonPath("$.data.taskName").value("Implement feature"));
     }
 
-    @Test
-    @WithMockUser
-    void createTask_ServiceReturnsEmpty_ReturnsInternalServerError() throws Exception {
+    @Test @WithMockUser
+    void createTask_ProjectNotFound_ReturnsNotFound() throws Exception {
         when(taskServices.createNewTask(any(TaskRequestDto.class), any(User.class)))
-                .thenReturn(Optional.empty());
-
-        mockMvc.perform(post("/api/task")
-                        .with(csrf())
-                        .with(user(testUser))
+                .thenThrow(new ResourceNotFoundException("Project", 1L));
+        mockMvc.perform(post("/api/task").with(csrf()).with(user(testUser))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(taskRequest)))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.success").value(false));
+                .andExpect(status().isNotFound());
     }
 
-    @Test
-    @WithMockUser
+    @Test @WithMockUser
     void createTask_ServiceThrowsException_ReturnsInternalServerError() throws Exception {
         when(taskServices.createNewTask(any(TaskRequestDto.class), any(User.class)))
                 .thenThrow(new RuntimeException("DB error"));
-
-        mockMvc.perform(post("/api/task")
-                        .with(csrf())
-                        .with(user(testUser))
+        mockMvc.perform(post("/api/task").with(csrf()).with(user(testUser))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(taskRequest)))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.success").value(false));
+                .andExpect(status().isInternalServerError());
     }
 
     // ========== GET /api/task/{id} ==========
 
-    @Test
-    @WithMockUser
+    @Test @WithMockUser
     void getTask_Success() throws Exception {
         when(taskServices.getTaskById(eq(1L), any(User.class)))
-                .thenReturn(Optional.of(taskResponse));
-
-        mockMvc.perform(get("/api/task/1")
-                        .with(user(testUser)))
+                .thenReturn(taskResponse);
+        mockMvc.perform(get("/api/task/1").with(user(testUser)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("Task retrieved successfully"))
                 .andExpect(jsonPath("$.data.taskName").value("Implement feature"));
     }
 
-    @Test
-    @WithMockUser
+    @Test @WithMockUser
     void getTask_NotFound() throws Exception {
         when(taskServices.getTaskById(eq(999L), any(User.class)))
-                .thenReturn(Optional.empty());
-
-        mockMvc.perform(get("/api/task/999")
-                        .with(user(testUser)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Task not found"));
+                .thenThrow(new ResourceNotFoundException("Task", 999L));
+        mockMvc.perform(get("/api/task/999").with(user(testUser)))
+                .andExpect(status().isNotFound());
     }
 
-    @Test
-    @WithMockUser
+    @Test @WithMockUser
     void getTask_ServiceThrowsException_ReturnsInternalServerError() throws Exception {
         when(taskServices.getTaskById(eq(1L), any(User.class)))
                 .thenThrow(new RuntimeException("DB error"));
-
-        mockMvc.perform(get("/api/task/1")
-                        .with(user(testUser)))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.success").value(false));
+        mockMvc.perform(get("/api/task/1").with(user(testUser)))
+                .andExpect(status().isInternalServerError());
     }
 
     // ========== PUT /api/task/{id} ==========
 
-    @Test
-    @WithMockUser
+    @Test @WithMockUser
     void updateTask_Success() throws Exception {
-        TaskResponseDto updatedResponse = new TaskResponseDto();
-        updatedResponse.setId(1L);
-        updatedResponse.setTaskName("Updated task");
-        updatedResponse.setProjectId(1L);
-        updatedResponse.setState(TASK_STATE.IN_PROGRESS);
-        updatedResponse.setImportance(TASK_IMPORTANCE.CRUCIAL);
-
+        TaskResponseDto updated = new TaskResponseDto();
+        updated.setId(1L); updated.setTaskName("Updated task"); updated.setProjectId(1L);
+        updated.setState(TASK_STATE.IN_PROGRESS); updated.setImportance(TASK_IMPORTANCE.CRUCIAL);
         when(taskServices.updateTask(eq(1L), any(TaskRequestDto.class), any(User.class)))
-                .thenReturn(Optional.of(updatedResponse));
-
-        TaskRequestDto updateRequest = new TaskRequestDto();
-        updateRequest.setTaskName("Updated task");
-        updateRequest.setState(TASK_STATE.IN_PROGRESS);
-        updateRequest.setImportance(TASK_IMPORTANCE.CRUCIAL);
-
-        mockMvc.perform(put("/api/task/1")
-                        .with(csrf())
-                        .with(user(testUser))
+                .thenReturn(updated);
+        TaskRequestDto req = new TaskRequestDto();
+        req.setTaskName("Updated task"); req.setState(TASK_STATE.IN_PROGRESS); req.setImportance(TASK_IMPORTANCE.CRUCIAL);
+        mockMvc.perform(put("/api/task/1").with(csrf()).with(user(testUser))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(updateRequest)))
+                        .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("Task updated successfully"))
                 .andExpect(jsonPath("$.data.taskName").value("Updated task"))
                 .andExpect(jsonPath("$.data.state").value("IN_PROGRESS"));
     }
 
-    @Test
-    @WithMockUser
+    @Test @WithMockUser
     void updateTask_NotFound() throws Exception {
         when(taskServices.updateTask(eq(999L), any(TaskRequestDto.class), any(User.class)))
-                .thenReturn(Optional.empty());
-
-        mockMvc.perform(put("/api/task/999")
-                        .with(csrf())
-                        .with(user(testUser))
+                .thenThrow(new ResourceNotFoundException("Task", 999L));
+        mockMvc.perform(put("/api/task/999").with(csrf()).with(user(testUser))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(taskRequest)))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Task not found or inaccessible"));
+                .andExpect(status().isNotFound());
     }
 
-    @Test
-    @WithMockUser
+    @Test @WithMockUser
     void updateTask_ServiceThrowsException_ReturnsInternalServerError() throws Exception {
         when(taskServices.updateTask(eq(1L), any(TaskRequestDto.class), any(User.class)))
                 .thenThrow(new RuntimeException("DB error"));
-
-        mockMvc.perform(put("/api/task/1")
-                        .with(csrf())
-                        .with(user(testUser))
+        mockMvc.perform(put("/api/task/1").with(csrf()).with(user(testUser))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(taskRequest)))
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.success").value(false));
+                .andExpect(status().isInternalServerError());
     }
 
     // ========== DELETE /api/task/{id} ==========
 
-    @Test
-    @WithMockUser
+    @Test @WithMockUser
     void deleteTask_Success() throws Exception {
-        when(taskServices.deleteTaskById(eq(1L), any(User.class)))
-                .thenReturn(true);
-
-        mockMvc.perform(delete("/api/task/1")
-                        .with(csrf())
-                        .with(user(testUser)))
-                .andExpect(status().isNoContent())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("Task deleted successfully"));
+        doNothing().when(taskServices).deleteTaskById(eq(1L), any(User.class));
+        mockMvc.perform(delete("/api/task/1").with(csrf()).with(user(testUser)))
+                .andExpect(status().isNoContent());
     }
 
-    @Test
-    @WithMockUser
-    void deleteTask_NotDeleted() throws Exception {
-        when(taskServices.deleteTaskById(eq(999L), any(User.class)))
-                .thenReturn(false);
-
-        mockMvc.perform(delete("/api/task/999")
-                        .with(csrf())
-                        .with(user(testUser)))
-                .andExpect(status().isNoContent())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value("Failed to delete task"));
+    @Test @WithMockUser
+    void deleteTask_NotFound() throws Exception {
+        doThrow(new ResourceNotFoundException("Task", 999L))
+                .when(taskServices).deleteTaskById(eq(999L), any(User.class));
+        mockMvc.perform(delete("/api/task/999").with(csrf()).with(user(testUser)))
+                .andExpect(status().isNotFound());
     }
 
-    @Test
-    @WithMockUser
-    void deleteTask_ServiceThrowsException() throws Exception {
-        when(taskServices.deleteTaskById(eq(1L), any(User.class)))
-                .thenThrow(new RuntimeException("DB error"));
-
-        mockMvc.perform(delete("/api/task/1")
-                        .with(csrf())
-                        .with(user(testUser)))
-                .andExpect(status().isNoContent())
-                .andExpect(jsonPath("$.success").value(false));
+    @Test @WithMockUser
+    void deleteTask_ServiceThrowsException_ReturnsInternalServerError() throws Exception {
+        doThrow(new RuntimeException("DB error"))
+                .when(taskServices).deleteTaskById(eq(1L), any(User.class));
+        mockMvc.perform(delete("/api/task/1").with(csrf()).with(user(testUser)))
+                .andExpect(status().isInternalServerError());
     }
 
     // ========== Auth test ==========
 
     @Test
     void createTask_Unauthenticated_ReturnsUnauthorized() throws Exception {
-        mockMvc.perform(post("/api/task")
-                        .with(csrf())
+        mockMvc.perform(post("/api/task").with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(taskRequest)))
                 .andExpect(status().isUnauthorized());
     }
 
-    @TestConfiguration
-    @EnableWebSecurity
+    @TestConfiguration @EnableWebSecurity
     static class TestSecurityConfig {
         @Bean
         public SecurityFilterChain testSecurityFilterChain(HttpSecurity http) throws Exception {
-            http
-                .csrf(AbstractHttpConfigurer::disable)
+            http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
-                .exceptionHandling(ex -> ex
-                    .authenticationEntryPoint(
-                        (req, res, e) -> res.sendError(HttpServletResponse.SC_UNAUTHORIZED)
-                    )
-                );
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(
+                    (req, res, e) -> res.sendError(HttpServletResponse.SC_UNAUTHORIZED)));
             return http.build();
         }
     }

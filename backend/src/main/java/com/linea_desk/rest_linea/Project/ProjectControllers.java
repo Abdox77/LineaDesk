@@ -2,240 +2,82 @@ package com.linea_desk.rest_linea.Project;
 
 import org.springframework.web.bind.annotation.RestController;
 
-import lombok.extern.log4j.Log4j2;
-
-
-import org.springframework.web.bind.annotation.PathVariable;
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.LogManager;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import static org.springframework.web.bind.annotation.RequestMethod.*;
+import org.springframework.web.bind.annotation.PathVariable;
 
-import java.util.Optional;
 import java.util.Collection;
-
-
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PathVariable;
 
 import com.linea_desk.rest_linea.User.User;
 import com.linea_desk.rest_linea.common.dto.ApiResponse;
-import org.springframework.web.bind.annotation.RequestParam;
 
+import jakarta.validation.Valid;
 
-
-@Log4j2
 @RestController
 @RequestMapping(path="/api")
-public class ProjectControllers{
+public class ProjectControllers {
 
     private final ProjectServices projectServices;
-    private static final Logger log = LogManager.getLogger(ProjectControllers.class);
 
-
-    public ProjectControllers(
-            ProjectServices projectServices
-    ){
+    public ProjectControllers(ProjectServices projectServices) {
         this.projectServices = projectServices;
     }
 
     @PostMapping(path="/project")
-    public ResponseEntity<ApiResponse<?>>
-    createNewProject(
+    public ResponseEntity<ApiResponse<?>> createNewProject(
             @AuthenticationPrincipal User currentUser,
-            @RequestBody ProjectRequestDto request
+            @Valid @RequestBody ProjectRequestDto request
     ) {
-        ApiResponse<?> response;
-
-        try {
-            Optional<ProjectResponseDto> project = projectServices.createNewProject(request, currentUser);
-            if (project.isEmpty()) {
-                throw new Exception("invalid operation project dto is empty");
-            }
-
-            ProjectResponseDto responseDto = project.get();
-            response = new ApiResponse<>(
-                    true,
-                    "Project created successfuly",
-                    responseDto
-            );
-        }
-        catch (Exception e) {
-            log.error("The exception was caught while trying to create new project: {}", e.getMessage());
-            response = new ApiResponse<>(
-                    false,
-                    "Internal Server Error"
-            );
-
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-
+        ProjectResponseDto responseDto = projectServices.createNewProject(request, currentUser);
+        ApiResponse<?> response = new ApiResponse<>(true, "Project created successfully", responseDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping(path="/project/{id}")
-    public ResponseEntity<ApiResponse<?>>
-    getUserProjects(
-        @AuthenticationPrincipal User user,
-        @PathVariable Long id
+    public ResponseEntity<ApiResponse<?>> getUserProjects(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long id
     ) {
-        ApiResponse<?> response;
-        try {
-            Optional<ProjectResponseDto> project = projectServices.getProjectById(id, user);
-
-            if(project.isEmpty()){
-                response = new ApiResponse<>(
-                    false,
-                    "Project not found"
-                );
-
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-            }
-
-            response = new ApiResponse(
-                true,
-                "Project search was a success",
-                project.get()
-            );
-        }
-        catch (Exception e) {
-            response = new ApiResponse<>(
-                    false,
-                    "Internal Server Error",
-                    e.getMessage()
-            );
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-
-        return ResponseEntity.status(HttpStatus.OK).body(response);
+        ProjectResponseDto project = projectServices.getProjectById(id, user);
+        ApiResponse<?> response = new ApiResponse<>(true, "Project search was a success", project);
+        return ResponseEntity.ok(response);
     }
-
 
     @GetMapping("/projects")
-    public ResponseEntity<ApiResponse<?>>
-    getProjectsList(
-        @AuthenticationPrincipal User user
+    public ResponseEntity<ApiResponse<?>> getProjectsList(
+            @AuthenticationPrincipal User user
     ) {
-        ApiResponse<?> response;
-
-        try {
-
-
-            Optional<Collection<ProjectResponseDto>> projects = projectServices.getAllProjectsForUser(user);
-
-            if(projects.isEmpty()) {
-
-                log.error("No projects found for user with ID: {}", user.getUserId());
-                response = new ApiResponse<>(
-                    false,
-                    "No projects found for the user"
-                );
-
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-            }
-
-            response = new ApiResponse<>(
-                    true,
-                    "Projects list retrieved successfully",
-                    projects.get()
-            );
-
-        } catch (Exception e) {
-            log.error("Error retrieving projects list: {}", e.getMessage());
-            response = new ApiResponse<>(
-                    false,
-                    "Internal Server Error",
-                    e.getMessage()
-            );
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-
-        return ResponseEntity.status(HttpStatus.OK).body(response);
+        Collection<ProjectResponseDto> projects = projectServices.getAllProjectsForUser(user);
+        ApiResponse<?> response = new ApiResponse<>(true, "Projects list retrieved successfully", projects);
+        return ResponseEntity.ok(response);
     }
-    
-
 
     @DeleteMapping("/project/{id}")
-    public ResponseEntity<ApiResponse<?>>
-    deleteProject(
-        @AuthenticationPrincipal User user,
-        @PathVariable Long id
+    public ResponseEntity<ApiResponse<?>> deleteProject(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long id
     ) {
-        ApiResponse<?> response;
-
-        try{
-            boolean isDeleted = projectServices.deleteProjectById(id, user);
-            if (!isDeleted) {
-                response = new ApiResponse<>(
-                        false,
-                        "Project not found or inaccessible"
-                );
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-            }
-
-            response = new ApiResponse<>(
-                    true,
-                    "Project deleted successfully"
-            );
-        }
-        catch (Exception e) {
-            log.error("Error deleting project: {}", e.getMessage());
-            response = new ApiResponse<>(
-                    false,
-                    "Internal Server Error",
-                    e.getMessage()
-            );
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
+        projectServices.deleteProjectById(id, user);
+        ApiResponse<?> response = new ApiResponse<>(true, "Project deleted successfully");
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body(response);
     }
 
-
     @PutMapping("/project/{id}")
-    public ResponseEntity<ApiResponse<?>>
-    updateProject(
-        @AuthenticationPrincipal User user,
-        @PathVariable Long id,
-        @RequestBody ProjectRequestDto request
+    public ResponseEntity<ApiResponse<?>> updateProject(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long id,
+            @Valid @RequestBody ProjectRequestDto request
     ) {
-        ApiResponse<?> response;
-
-        try {
-            Optional<ProjectResponseDto> project = projectServices.updateProject(id, request, user);
-
-            if (project.isEmpty()) {
-                response = new ApiResponse<>(
-                        false,
-                        "Project not found or inaccessible"
-                );
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-            }
-
-            response = new ApiResponse<>(
-                    true,
-                    "Project updated successfully",
-                    project.get()
-            );
-        } catch (Exception e) {
-            log.error("Error updating project: {}", e.getMessage());
-            response = new ApiResponse<>(
-                    false,
-                    "Internal Server Error",
-                    e.getMessage()
-            );
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
-        }
-
-        return ResponseEntity.status(HttpStatus.OK).body(response);
+        ProjectResponseDto project = projectServices.updateProject(id, request, user);
+        ApiResponse<?> response = new ApiResponse<>(true, "Project updated successfully", project);
+        return ResponseEntity.ok(response);
     }
-
 }

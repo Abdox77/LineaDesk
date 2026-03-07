@@ -2,9 +2,18 @@ package com.linea_desk.rest_linea.Project;
 
 import com.linea_desk.rest_linea.Project.Project.PROJECT_STATE;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+
 public class ProjectRequestDto {
     private Integer sessions;
+
+    @NotNull(message = "Project name cannot be null")
+    @NotBlank(message = "Project name cannot be blank")
+    @Size(min = 3, message = "Project name must be at least 3 characters long")
     private String projectName;
+
     private String description;
     private String githubLink;
     private PROJECT_STATE state;

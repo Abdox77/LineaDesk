@@ -29,6 +29,10 @@ public class ExceptionResponse<T> {
         return message;
     }
 
+    public boolean isSuccess() {
+        return success;
+    }
+
     public void setData(T data) {
         this.data = data;
     }
