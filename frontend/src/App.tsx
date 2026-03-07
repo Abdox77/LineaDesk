@@ -10,6 +10,7 @@ import { OAuthCallback } from './pages/OAuthCallback';
 import { Dashboard } from './pages/Dashboard';
 import { ProjectDetails } from './pages/ProjectDetails';
 import { Projects } from './pages/Projects';
+import { FocusSession } from './pages/FocusSession';
 
 function App() {
     return (
@@ -40,6 +41,14 @@ function App() {
                         element={
                             <RequireAuth>
                                 <Projects />
+                            </RequireAuth>
+                        }
+                    />
+                    <Route
+                        path='/focus/:projectId'
+                        element={
+                            <RequireAuth>
+                                <FocusSession />
                             </RequireAuth>
                         }
                     />
