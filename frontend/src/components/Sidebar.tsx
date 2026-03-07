@@ -7,15 +7,14 @@ interface SidebarProps {
 }
 
 const navItems = [
-    { label: 'Dashboard', icon: 'dashboard', href: '/dashboard', filled: true },
-    { label: 'Projects', icon: 'folder_open', href: '/projects' },
-    { label: 'Analytics', icon: 'timeline', href: '/analytics' },
+    { label: 'Dashboard', icon: 'pie_chart', href: '/dashboard' },
+    { label: 'Projects', icon: 'folder', href: '/projects' },
+    { label: 'Analytics', icon: 'bar_chart', href: '/analytics' },
     { label: 'Habits', icon: 'check_circle', href: '/habits' },
 ];
 
 const settingsItems = [
-    { label: 'Profile', icon: 'manage_accounts', href: '/profile' },
-    { label: 'Preferences', icon: 'settings', href: '/preferences' },
+    { label: 'Settings', icon: 'settings', href: '/preferences' },
 ];
 
 export function Sidebar({ displayName = 'My Space' }: SidebarProps) {
@@ -26,82 +25,85 @@ export function Sidebar({ displayName = 'My Space' }: SidebarProps) {
         window.location.href = '/login';
     };
 
-    const isActive = (href: string) => location.pathname === href;
+    const isActive = (href: string) =>
+        location.pathname === href || location.pathname.startsWith(href + '/');
 
     return (
-        <aside className="w-[260px] flex-shrink-0 flex flex-col bg-white dark:bg-[#1c2024] border-r border-border-light dark:border-gray-800 transition-colors duration-300">
-            <div className="p-6 pb-2">
-                <div className="mb-6">
-                    <DevHubLogo size="md" />
+        <aside className="w-20 lg:w-64 flex-shrink-0 flex flex-col bg-surface-light dark:bg-surface-dark border-r border-border-light dark:border-border-dark transition-all duration-300">
+            {/* Logo */}
+            <div className="flex flex-col gap-6 p-4">
+                <div className="flex items-center gap-3 px-2">
+                    <DevHubLogo size="md" showText={false} className="lg:hidden" />
+                    <DevHubLogo size="md" className="hidden lg:flex" />
                 </div>
 
-                <button className="w-full flex items-center justify-between px-3 py-2 bg-background-light dark:bg-background-dark border border-border-light dark:border-gray-700 rounded-lg hover:border-primary/50 transition-colors group">
-                    <div className="flex items-center gap-3">
-                        <div className="size-6 rounded-full bg-gradient-to-br from-primary to-sky-300 flex-shrink-0" />
-                        <span className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate">
-                            {displayName}
-                        </span>
-                    </div>
-                    <span className="material-symbols-outlined text-gray-400 group-hover:text-primary text-[18px]">
-                        unfold_more
-                    </span>
-                </button>
+                {/* Navigation */}
+                <nav className="flex flex-col gap-1">
+                    {navItems.map((item) => {
+                        const active = isActive(item.href);
+                        return (
+                            <Link
+                                key={item.href}
+                                to={item.href}
+                                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all ${
+                                    active
+                                        ? 'bg-primary/10 dark:bg-primary/20 text-primary dark:text-white border border-transparent dark:border-border-dark'
+                                        : 'text-gray-500 dark:text-text-secondary hover:bg-gray-100 dark:hover:bg-surface-dark-alt border border-transparent'
+                                }`}
+                            >
+                                <span
+                                    className={`material-symbols-outlined text-[24px] transition-colors ${
+                                        active ? 'text-primary' : 'group-hover:text-primary'
+                                    }`}
+                                >
+                                    {item.icon}
+                                </span>
+                                <span className={`text-sm hidden lg:block ${active ? 'font-bold' : 'font-medium'}`}>
+                                    {item.label}
+                                </span>
+                            </Link>
+                        );
+                    })}
+                </nav>
             </div>
 
-            <nav className="flex-1 px-4 py-4 flex flex-col gap-1 overflow-y-auto">
-                <p className="px-3 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
-                    Workspace
-                </p>
-
-                {navItems.map((item) => (
-                    <Link
-                        key={item.href}
-                        to={item.href}
-                        className={`flex items-center gap-3 px-3 py-2 rounded-lg font-medium transition-all ${
-                            isActive(item.href)
-                                ? 'bg-primary/10 text-primary dark:text-sky-400'
-                                : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-gray-200'
-                        }`}
-                    >
-                        <span
-                            className="material-symbols-outlined text-[20px]"
-                            style={isActive(item.href) && item.filled ? { fontVariationSettings: "'FILL' 1" } : undefined}
-                        >
-                            {item.icon}
-                        </span>
-                        <span className="text-sm">{item.label}</span>
-                    </Link>
-                ))}
-
-                <div className="mt-6">
-                    <p className="px-3 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2">
-                        Settings
-                    </p>
-                    {settingsItems.map((item) => (
+            {/* Bottom section */}
+            <div className="mt-auto p-4 border-t border-border-light dark:border-border-dark">
+                {settingsItems.map((item) => {
+                    const active = isActive(item.href);
+                    return (
                         <Link
                             key={item.href}
                             to={item.href}
-                            className={`flex items-center gap-3 px-3 py-2 rounded-lg font-medium transition-all ${
-                                isActive(item.href)
+                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-colors group ${
+                                active
                                     ? 'bg-primary/10 text-primary dark:text-sky-400'
-                                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-gray-200'
+                                    : 'text-gray-500 dark:text-text-secondary hover:bg-gray-100 dark:hover:bg-surface-dark-alt'
                             }`}
                         >
-                            <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
-                            <span className="text-sm">{item.label}</span>
+                            <span className="material-symbols-outlined text-[24px] group-hover:text-primary transition-colors">
+                                {item.icon}
+                            </span>
+                            <span className="text-sm hidden lg:block">{item.label}</span>
                         </Link>
-                    ))}
-                </div>
-            </nav>
+                    );
+                })}
 
-            <div className="p-4 border-t border-border-light dark:border-gray-800">
-                <button
-                    onClick={handleSignOut}
-                    className="w-full flex items-center justify-center gap-2 py-2 text-sm font-medium text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white transition-colors"
-                >
-                    <span className="material-symbols-outlined text-[18px]">logout</span>
-                    Sign Out
-                </button>
+                {/* User profile */}
+                <div className="mt-4 flex items-center gap-3 px-3">
+                    <div className="size-8 rounded-full bg-gradient-to-br from-primary to-sky-300 flex-shrink-0 border border-transparent dark:border-border-dark" />
+                    <div className="hidden lg:block min-w-0">
+                        <p className="text-xs font-bold text-gray-900 dark:text-gray-100 truncate">
+                            {displayName}
+                        </p>
+                        <button
+                            onClick={handleSignOut}
+                            className="text-[10px] text-gray-500 dark:text-text-secondary hover:text-primary transition-colors"
+                        >
+                            Sign Out
+                        </button>
+                    </div>
+                </div>
             </div>
         </aside>
     );

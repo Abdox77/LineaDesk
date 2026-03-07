@@ -7,7 +7,8 @@ export type ActivityType =
     | 'task_deleted'
     | 'project_created'
     | 'project_updated'
-    | 'project_deleted';
+    | 'project_deleted'
+    | 'focus_session';
 
 interface ActivityEntry {
     date: string;

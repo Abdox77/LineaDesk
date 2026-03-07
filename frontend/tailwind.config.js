@@ -8,13 +8,21 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        "primary": "#0b84c1",
+        "primary": "#38bdf8",
+        "primary-dark": "#0284c7",
+        "accent-pop": "#10b981",
         "background-light": "#fafafa",
-        "background-dark": "#22262a",
+        "background-dark": "#0d1117",
+        "surface-light": "#ffffff",
+        "surface-dark": "#161b22",
+        "surface-dark-alt": "#21262d",
+        "border-light": "#e2e8f0",
+        "border-dark": "#30363d",
+        "text-main": "#c9d1d9",
+        "text-secondary": "#8b949e",
+        // Legacy aliases for existing components
         "card-light": "#ffffff",
-        "card-dark": "#1e2227",
-        "border-light": "#e5e7eb",
-        "border-dark": "#374151",
+        "card-dark": "#161b22",
         // Heatmap levels
         "git-level-0": "#ebedf0",
         "git-level-1": "#9be9a8",
@@ -29,7 +37,7 @@ module.exports = {
       },
       fontFamily: {
         "display": ["Manrope", "sans-serif"],
-        "mono": ["JetBrains Mono", "monospace"],
+        "mono": ["JetBrains Mono", "ui-monospace", "SFMono-Regular", "monospace"],
       },
       borderRadius: {
         "DEFAULT": "0.25rem",

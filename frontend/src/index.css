@@ -10,7 +10,29 @@ body {
     font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
 
-/* Heatmap scrollbar */
+/* ── Scrollbar ── */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+.dark ::-webkit-scrollbar-thumb {
+    background: #30363d;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+    background: #8b949e;
+}
+
+/* ── Heatmap scrollbar ── */
 .hide-scrollbar::-webkit-scrollbar {
     height: 6px;
 }
@@ -23,4 +45,23 @@ body {
 }
 .hide-scrollbar::-webkit-scrollbar-track {
     background-color: transparent;
+}
+
+/* ── Checkbox overrides ── */
+.dark input[type="checkbox"] {
+    background-color: transparent;
+    border-color: #30363d;
+}
+.dark input[type="checkbox"]:checked {
+    background-color: #38bdf8;
+    border-color: #38bdf8;
+}
+.task-checkbox:checked {
+    background-color: #38bdf8;
+    border-color: #38bdf8;
+}
+
+/* ── Focus mode radial gradient ── */
+.focus-gradient {
+    background: radial-gradient(circle at 50% 30%, rgba(255,255,255,0.04), transparent 70%);
 }
