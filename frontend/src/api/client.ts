@@ -23,11 +23,10 @@ api.interceptors.response.use(
             window.location.href = '/login';
         }
 
-        // Extract structured error message from backend ExceptionResponse
         const data = error.response?.data;
         if (data?.message) {
             error.message = data.message;
-            error.fieldErrors = data.data; // validation field errors map
+            error.fieldErrors = data.data;
         }
 
         return Promise.reject(error);

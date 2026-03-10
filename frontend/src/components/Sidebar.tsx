@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { DevHubLogo } from './DevHubLogo';
-import { useTheme } from './ThemeProvider'; // theme toggle
+import { useTheme } from './ThemeProvider';
 
 interface SidebarProps {
     displayName?: string;
@@ -32,14 +32,12 @@ export function Sidebar({ displayName = 'My Space' }: SidebarProps) {
 
     return (
         <aside className="w-20 lg:w-64 flex-shrink-0 flex flex-col bg-surface-light dark:bg-surface-dark border-r border-border-light dark:border-border-dark transition-all duration-300">
-            {/* Logo */}
             <div className="flex flex-col gap-6 p-4">
                 <div className="flex items-center gap-3 px-2">
                     <DevHubLogo size="md" showText={false} className="lg:hidden" />
                     <DevHubLogo size="md" className="hidden lg:flex" />
                 </div>
 
-                {/* Navigation */}
                 <nav className="flex flex-col gap-1">
                     {navItems.map((item) => {
                         const active = isActive(item.href);
@@ -69,9 +67,7 @@ export function Sidebar({ displayName = 'My Space' }: SidebarProps) {
                 </nav>
             </div>
 
-            {/* Bottom section */}
             <div className="mt-auto p-4 border-t border-border-light dark:border-border-dark">
-                {/* Theme toggle */}
                 <button
                     onClick={toggleTheme}
                     className="flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-colors group text-gray-500 dark:text-text-secondary hover:bg-gray-100 dark:hover:bg-surface-dark-alt w-full mb-1"
@@ -104,7 +100,6 @@ export function Sidebar({ displayName = 'My Space' }: SidebarProps) {
                     );
                 })}
 
-                {/* User profile */}
                 <div className="mt-4 flex items-center gap-3 px-3">
                     <div className="size-8 rounded-full bg-gradient-to-br from-primary to-sky-300 flex-shrink-0 border border-transparent dark:border-border-dark" />
                     <div className="hidden lg:block min-w-0">

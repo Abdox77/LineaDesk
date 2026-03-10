@@ -8,11 +8,15 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 
+import java.time.LocalDate;
 import java.util.Collection;
+import java.util.List;
 
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
@@ -79,5 +83,50 @@ public class HabitControllers {
         habitServices.deleteHabitById(id, user);
         ApiResponse<?> response = new ApiResponse<>(true, "Habit deleted successfully");
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body(response);
+    }
+
+    @PostMapping("/habit/{id}/log")
+    public ResponseEntity<ApiResponse<?>> logHabit(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long id,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+    ) {
+        HabitLogResponseDto log = habitServices.logHabit(id, date, user);
+        ApiResponse<?> response = new ApiResponse<>(true, "Habit logged successfully", log);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @DeleteMapping("/habit/{id}/log")
+    public ResponseEntity<ApiResponse<?>> unlogHabit(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long id,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+    ) {
+        habitServices.unlogHabit(id, date, user);
+        ApiResponse<?> response = new ApiResponse<>(true, "Habit log removed");
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).body(response);
+    }
+
+    @GetMapping("/habit/{id}/logs")
+    public ResponseEntity<ApiResponse<?>> getHabitLogs(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long id,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
+    ) {
+        List<HabitLogResponseDto> logs = habitServices.getHabitLogs(id, from, to, user);
+        ApiResponse<?> response = new ApiResponse<>(true, "Habit logs retrieved", logs);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/habits/logs")
+    public ResponseEntity<ApiResponse<?>> getAllHabitLogs(
+            @AuthenticationPrincipal User user,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
+    ) {
+        List<HabitLogResponseDto> logs = habitServices.getAllHabitLogsForUser(from, to, user);
+        ApiResponse<?> response = new ApiResponse<>(true, "All habit logs retrieved", logs);
+        return ResponseEntity.ok(response);
     }
 }

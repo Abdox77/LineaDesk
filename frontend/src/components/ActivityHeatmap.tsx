@@ -40,7 +40,6 @@ export function ActivityHeatmap({ refreshKey, scrollTrigger }: ActivityHeatmapPr
 
     return (
         <section className="bg-white dark:bg-[#161b22] rounded-xl border border-gray-200 dark:border-[#30363d] shadow-sm">
-            {/* Header */}
             <div className="flex items-center justify-between px-6 pt-5 pb-3">
                 <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-lg bg-emerald-100 dark:bg-emerald-900/20 flex items-center justify-center">
@@ -54,7 +53,6 @@ export function ActivityHeatmap({ refreshKey, scrollTrigger }: ActivityHeatmapPr
                     </div>
                 </div>
                 <div className="flex items-center gap-4">
-                    {/* Quick stats */}
                     <div className="hidden md:flex items-center gap-4 text-xs">
                         <div className="flex flex-col items-center px-3 py-1.5 rounded-lg bg-gray-50 dark:bg-[#21262d]">
                             <span className="font-bold text-gray-900 dark:text-white text-sm">{todayCount}</span>
@@ -65,7 +63,6 @@ export function ActivityHeatmap({ refreshKey, scrollTrigger }: ActivityHeatmapPr
                             <span className="text-gray-500 dark:text-gray-400">This month</span>
                         </div>
                     </div>
-                    {/* Legend */}
                     <div className="flex items-center gap-1.5 text-[11px] text-gray-400 dark:text-gray-500">
                         <span>Less</span>
                         {[0, 1, 2, 3, 4].map((level) => (
@@ -76,10 +73,8 @@ export function ActivityHeatmap({ refreshKey, scrollTrigger }: ActivityHeatmapPr
                 </div>
             </div>
 
-            {/* Heatmap grid */}
             <div className="px-6 pb-5">
                 <div className="flex gap-0">
-                    {/* Day labels column */}
                     <div className="flex flex-col gap-[3px] pr-2 pt-[22px]">
                         {DAY_LABELS.map((label, i) => (
                             <div key={i} className="h-[11px] flex items-center">
@@ -90,10 +85,8 @@ export function ActivityHeatmap({ refreshKey, scrollTrigger }: ActivityHeatmapPr
                         ))}
                     </div>
 
-                    {/* Scrollable grid area */}
                     <div className="flex-1 overflow-x-auto hide-scrollbar" ref={scrollRef}>
                         <div className="relative">
-                            {/* Month label row */}
                             <div className="relative" style={{ height: '14px', marginBottom: '4px' }}>
                                 {monthLabels.map((ml, i) => (
                                     <span
@@ -105,7 +98,6 @@ export function ActivityHeatmap({ refreshKey, scrollTrigger }: ActivityHeatmapPr
                                     </span>
                                 ))}
                             </div>
-                            {/* Grid */}
                             <div className="flex gap-[3px]">
                                 {weeks.map((week, wi) => (
                                     <div key={wi} className="flex flex-col gap-[3px]">
@@ -171,7 +163,6 @@ function buildHeatmapGridEnhanced(): {
         currentWeek.push(level);
         currentWeekDates.push(dateStr);
 
-        // Track month boundaries
         const m = cursor.getMonth();
         if (m !== lastMonth && cursor.getDate() <= 7) {
             monthLabels.push({ label: MONTH_NAMES[m], weekIndex: weeks.length });

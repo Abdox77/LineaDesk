@@ -6,8 +6,8 @@ import { CSS } from '@dnd-kit/utilities';
 import { Sidebar } from '../components/Sidebar';
 import { useAuth } from '../auth/AuthContext';
 import { useToast } from '../components/ToastProvider';
-import { fetchProject, updateProject, createTask, updateTask, deleteTask, reorderTasks, bulkDeleteTasks, bulkUpdateTaskState } from '../api/endpoints';
-import type { ProjectResponseDto, ProjectState, TaskResponseDto, TaskState, TaskImportance, TaskRequestDto } from '../api/types';
+import { fetchProject, updateProject, createTask, updateTask, deleteTask, reorderTasks, bulkDeleteTasks, bulkUpdateTaskState, fetchGitHubCommits, fetchGitHubPullRequests } from '../api/endpoints';
+import type { ProjectResponseDto, ProjectState, TaskResponseDto, TaskState, TaskImportance, TaskRequestDto, GitHubCommitDto, GitHubPullRequestDto } from '../api/types';
 import { TaskModal } from '../components/TaskModal';
 import { EditProjectModal } from '../components/EditProjectModal';
 import { EmptyState, SkeletonRow } from '../components/EmptyState';
@@ -97,12 +97,10 @@ export function ProjectDetails() {
     const [newTaskName, setNewTaskName] = useState('');
     const [menuOpenId, setMenuOpenId] = useState<number | null>(null);
 
-    /* Filters */
     const [searchQuery, setSearchQuery] = useState('');
     const [filterState, setFilterState] = useState<TaskState | 'ALL'>('ALL');
     const [filterImportance, setFilterImportance] = useState<TaskImportance | 'ALL'>('ALL');
 
-    /* Drag & Drop sensors */
     const sensors = useSensors(
         useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
         useSensor(KeyboardSensor)
@@ -201,7 +199,6 @@ export function ProjectDetails() {
         const reordered = arrayMove(tasks, oldIndex, newIndex);
         const reorderItems = reordered.map((t, i) => ({ id: t.id, sortOrder: i }));
 
-        // Optimistic update
         setProject({ ...project, tasks: reordered.map((t, i) => ({ ...t, sortOrder: i })) });
 
         try {
@@ -269,7 +266,7 @@ export function ProjectDetails() {
 
     /* Apply filters */
     const filteredTasks = sortedTasks.filter((t) => {
-        if (t.parentTaskId) return false; // hide subtasks from main list
+        if (t.parentTaskId) return false;
         if (searchQuery && !t.taskName.toLowerCase().includes(searchQuery.toLowerCase()) && !(t.description ?? '').toLowerCase().includes(searchQuery.toLowerCase())) return false;
         if (filterState !== 'ALL' && t.state !== filterState) return false;
         if (filterImportance !== 'ALL' && t.importance !== filterImportance) return false;
@@ -347,7 +344,6 @@ export function ProjectDetails() {
                                 </div>
                             </div>
 
-                            {/* Progress bar */}
                             <div className="flex items-center gap-4">
                                 <div className="flex-1 h-2 bg-gray-100 dark:bg-surface-dark-alt rounded-full overflow-hidden">
                                     <div
@@ -468,7 +464,6 @@ export function ProjectDetails() {
                             )}
 
                             <div className="rounded-xl border border-gray-200 dark:border-border-dark bg-white dark:bg-surface-dark">
-                                {/* Table header */}
                                 <div className="grid grid-cols-[40px_1fr_120px_80px_90px_48px] items-center px-4 py-3 border-b border-gray-200 dark:border-border-dark text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     <div className="flex items-center justify-center">
                                         <input
@@ -485,7 +480,6 @@ export function ProjectDetails() {
                                     <div />
                                 </div>
 
-                                {/* Task rows */}
                                 {loading ? (
                                     <>
                                         <SkeletonRow />
@@ -521,7 +515,6 @@ export function ProjectDetails() {
                                     </DndContext>
                                 )}
 
-                                {/* Quick-add row */}
                                 <div className="grid grid-cols-[40px_1fr_120px_80px_90px_48px] items-center px-4 py-3 border-t border-gray-200 dark:border-border-dark">
                                     <div className="flex items-center justify-center">
                                         <span className="material-symbols-outlined text-[18px] text-gray-300 dark:text-gray-600">add</span>
@@ -580,6 +573,10 @@ export function ProjectDetails() {
                                 iconColor="text-accent-pop"
                             />
                         </section>
+
+                        {project.githubLink && (
+                            <GitHubPanel githubLink={project.githubLink} />
+                        )}
                     </div>
                 </main>
             </div>
@@ -648,7 +645,6 @@ function SortableTaskRow(props: SortableTaskRowProps) {
             style={style}
             className={`grid grid-cols-[40px_1fr_120px_80px_90px_48px] items-center px-4 py-3 border-b border-gray-200 dark:border-border-dark group hover:bg-gray-50 dark:hover:bg-surface-dark-alt/50 transition-colors ${props.selected ? 'bg-primary/5' : ''}`}
         >
-            {/* Drag handle + Checkbox */}
             <div className="flex items-center justify-center gap-1">
                 <span
                     {...attributes}
@@ -665,7 +661,6 @@ function SortableTaskRow(props: SortableTaskRowProps) {
                 />
             </div>
 
-            {/* Task name + description + subtask count */}
             <div className="flex flex-col gap-0.5 min-w-0 cursor-pointer" onClick={props.onEdit}>
                 <div className="flex items-center gap-2">
                     <span className={`text-sm font-medium truncate ${isFinished ? 'line-through text-gray-400 dark:text-gray-500' : 'text-gray-900 dark:text-gray-100 group-hover:text-primary'} transition-colors`}>
@@ -682,12 +677,10 @@ function SortableTaskRow(props: SortableTaskRowProps) {
                 )}
             </div>
 
-            {/* Status badge */}
             <div>
                 <StatusBadge state={task.state} />
             </div>
 
-            {/* Due date */}
             <div>
                 {task.dueDate && (
                     <span className={`text-xs font-medium flex items-center gap-1 ${overdue ? 'text-red-500 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'}`}>
@@ -697,12 +690,10 @@ function SortableTaskRow(props: SortableTaskRowProps) {
                 )}
             </div>
 
-            {/* Duration */}
             <div className="text-sm text-gray-500 dark:text-gray-400 tabular-nums font-mono">
                 {formatDuration(task.duration)}
             </div>
 
-            {/* Context menu */}
             <div className="flex items-center justify-center relative">
                 <button
                     onClick={props.onToggleMenu}
@@ -764,7 +755,6 @@ function SortableTaskRow(props: SortableTaskRowProps) {
     );
 }
 
-/* ── Stat Card ── */
 
 interface StatCardProps {
     label: string;
@@ -792,5 +782,160 @@ function StatCard({ label, value, detail, barPct, icon, iconColor }: StatCardPro
                 </div>
             )}
         </div>
+    );
+}
+
+
+function parseGitHubLink(link: string): { owner: string; repo: string } | null {
+    try {
+        const url = new URL(link);
+        const parts = url.pathname.replace(/^\//, '').replace(/\.git$/, '').split('/');
+        if (parts.length >= 2) return { owner: parts[0], repo: parts[1] };
+    } catch {}
+    return null;
+}
+
+function timeAgo(dateStr: string): string {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 60) return `${mins}m ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    if (days < 30) return `${days}d ago`;
+    return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function GitHubPanel({ githubLink }: { githubLink: string }) {
+    const parsed = parseGitHubLink(githubLink);
+    const [tab, setTab] = React.useState<'commits' | 'prs'>('commits');
+    const [commits, setCommits] = React.useState<GitHubCommitDto[]>([]);
+    const [prs, setPrs] = React.useState<GitHubPullRequestDto[]>([]);
+    const [loading, setLoading] = React.useState(true);
+    const [expanded, setExpanded] = React.useState(false);
+
+    React.useEffect(() => {
+        if (!parsed) { setLoading(false); return; }
+        setLoading(true);
+        Promise.all([
+            fetchGitHubCommits(parsed.owner, parsed.repo),
+            fetchGitHubPullRequests(parsed.owner, parsed.repo),
+        ]).then(([c, p]) => {
+            setCommits(c);
+            setPrs(p);
+        }).finally(() => setLoading(false));
+    }, [githubLink]);
+
+    if (!parsed) return null;
+
+    return (
+        <section className="rounded-xl border border-gray-200 dark:border-border-dark bg-white dark:bg-surface-dark overflow-hidden">
+            <button
+                onClick={() => setExpanded(!expanded)}
+                className="w-full flex items-center justify-between px-5 py-4 hover:bg-gray-50 dark:hover:bg-surface-dark-alt transition-colors"
+            >
+                <div className="flex items-center gap-3">
+                    <span className="material-symbols-outlined text-[20px] text-gray-500 dark:text-gray-400">code</span>
+                    <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">GitHub Activity</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400 font-mono">{parsed.owner}/{parsed.repo}</span>
+                </div>
+                <span className={`material-symbols-outlined text-[20px] text-gray-400 transition-transform ${expanded ? 'rotate-180' : ''}`}>
+                    expand_more
+                </span>
+            </button>
+
+            {expanded && (
+                <div className="border-t border-gray-200 dark:border-border-dark">
+                    <div className="flex border-b border-gray-200 dark:border-border-dark">
+                        <button
+                            onClick={() => setTab('commits')}
+                            className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold transition-colors border-b-2 ${
+                                tab === 'commits'
+                                    ? 'border-primary text-primary'
+                                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                            }`}
+                        >
+                            <span className="material-symbols-outlined text-[16px]">commit</span>
+                            Commits ({commits.length})
+                        </button>
+                        <button
+                            onClick={() => setTab('prs')}
+                            className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold transition-colors border-b-2 ${
+                                tab === 'prs'
+                                    ? 'border-primary text-primary'
+                                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                            }`}
+                        >
+                            <span className="material-symbols-outlined text-[16px]">merge</span>
+                            Pull Requests ({prs.length})
+                        </button>
+                    </div>
+
+                    <div className="max-h-80 overflow-y-auto">
+                        {loading ? (
+                            <div className="flex items-center justify-center py-8">
+                                <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                            </div>
+                        ) : tab === 'commits' ? (
+                            commits.length === 0 ? (
+                                <div className="py-8 text-center text-gray-400 dark:text-gray-500 text-sm">No commits found</div>
+                            ) : (
+                                commits.map((c) => (
+                                    <a
+                                        key={c.sha}
+                                        href={c.url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="flex items-start gap-3 px-5 py-3 border-b border-gray-100 dark:border-border-dark/50 hover:bg-gray-50 dark:hover:bg-surface-dark-alt/50 transition-colors"
+                                    >
+                                        <span className="font-mono text-xs text-primary bg-primary/10 px-1.5 py-0.5 rounded mt-0.5 flex-shrink-0">
+                                            {c.sha}
+                                        </span>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm text-gray-900 dark:text-gray-100 truncate">{c.message}</p>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                                {c.authorName} &middot; {timeAgo(c.date)}
+                                            </p>
+                                        </div>
+                                    </a>
+                                ))
+                            )
+                        ) : (
+                            prs.length === 0 ? (
+                                <div className="py-8 text-center text-gray-400 dark:text-gray-500 text-sm">No pull requests found</div>
+                            ) : (
+                                prs.map((pr) => (
+                                    <a
+                                        key={pr.number}
+                                        href={pr.url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="flex items-start gap-3 px-5 py-3 border-b border-gray-100 dark:border-border-dark/50 hover:bg-gray-50 dark:hover:bg-surface-dark-alt/50 transition-colors"
+                                    >
+                                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold flex-shrink-0 mt-0.5 ${
+                                            pr.state === 'open'
+                                                ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400'
+                                                : pr.state === 'closed'
+                                                    ? 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400'
+                                                    : 'bg-violet-100 dark:bg-violet-900/20 text-violet-700 dark:text-violet-400'
+                                        }`}>
+                                            {pr.state === 'open' ? 'Open' : pr.state === 'closed' ? 'Closed' : 'Merged'}
+                                        </span>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm text-gray-900 dark:text-gray-100 truncate">
+                                                #{pr.number} {pr.title}
+                                            </p>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                                {pr.authorName} &middot; {timeAgo(pr.createdAt)}
+                                            </p>
+                                        </div>
+                                    </a>
+                                ))
+                            )
+                        )}
+                    </div>
+                </div>
+            )}
+        </section>
     );
 }
