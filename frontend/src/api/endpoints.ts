@@ -4,10 +4,16 @@ import type {
     ProjectResponseDto,
     ProjectRequestDto,
     HabitResponseDto,
+    HabitRequestDto,
+    HabitLogResponseDto,
     TaskResponseDto,
     TaskRequestDto,
     TaskReorderItem,
     BulkTaskStateDto,
+    GitHubCommitDto,
+    GitHubPullRequestDto,
+    ProjectInviteResponseDto,
+    ProjectMemberResponseDto,
 } from './types';
 
 export async function fetchProjects(): Promise<ProjectResponseDto[]> {
@@ -64,3 +70,74 @@ export async function fetchHabits(): Promise<HabitResponseDto[]> {
     const { data } = await api.get<ApiResponse<HabitResponseDto[]>>('/api/habits');
     return data.data ?? [];
 }
+
+export async function createHabit(req: HabitRequestDto): Promise<HabitResponseDto> {
+    const { data } = await api.post<ApiResponse<HabitResponseDto>>('/api/habit', req);
+    return data.data;
+}
+
+export async function updateHabit(id: number, req: Partial<HabitRequestDto>): Promise<HabitResponseDto> {
+    const { data } = await api.put<ApiResponse<HabitResponseDto>>(`/api/habit/${id}`, req);
+    return data.data;
+}
+
+export async function deleteHabit(id: number): Promise<void> {
+    await api.delete(`/api/habit/${id}`);
+}
+
+export async function logHabitDay(habitId: number, date: string): Promise<HabitLogResponseDto> {
+    const { data } = await api.post<ApiResponse<HabitLogResponseDto>>(`/api/habit/${habitId}/log?date=${date}`);
+    return data.data;
+}
+
+export async function unlogHabitDay(habitId: number, date: string): Promise<void> {
+    await api.delete(`/api/habit/${habitId}/log?date=${date}`);
+}
+
+export async function fetchHabitLogs(habitId: number, from: string, to: string): Promise<HabitLogResponseDto[]> {
+    const { data } = await api.get<ApiResponse<HabitLogResponseDto[]>>(`/api/habit/${habitId}/logs?from=${from}&to=${to}`);
+    return data.data ?? [];
+}
+
+export async function fetchAllHabitLogs(from: string, to: string): Promise<HabitLogResponseDto[]> {
+    const { data } = await api.get<ApiResponse<HabitLogResponseDto[]>>(`/api/habits/logs?from=${from}&to=${to}`);
+    return data.data ?? [];
+}
+
+export async function fetchGitHubCommits(owner: string, repo: string): Promise<GitHubCommitDto[]> {
+    try {
+        const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/commits?per_page=10`);
+        if (!res.ok) return [];
+        const commits = await res.json();
+        return commits.map((c: any) => ({
+            sha: c.sha?.slice(0, 7) ?? '',
+            message: c.commit?.message?.split('\n')[0] ?? '',
+            authorName: c.commit?.author?.name ?? c.author?.login ?? 'Unknown',
+            authorAvatar: c.author?.avatar_url ?? '',
+            date: c.commit?.author?.date ?? '',
+            url: c.html_url ?? '',
+        }));
+    } catch {
+        return [];
+    }
+}
+
+export async function fetchGitHubPullRequests(owner: string, repo: string): Promise<GitHubPullRequestDto[]> {
+    try {
+        const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/pulls?state=all&per_page=10`);
+        if (!res.ok) return [];
+        const prs = await res.json();
+        return prs.map((pr: any) => ({
+            number: pr.number,
+            title: pr.title ?? '',
+            state: pr.state ?? 'open',
+            authorName: pr.user?.login ?? 'Unknown',
+            authorAvatar: pr.user?.avatar_url ?? '',
+            createdAt: pr.created_at ?? '',
+            url: pr.html_url ?? '',
+        }));
+    } catch {
+        return [];
+    }
+}
+

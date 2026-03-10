@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { fetchProject, updateTask, updateProject } from '../api/endpoints';
-import type { ProjectResponseDto, TaskResponseDto, TaskState } from '../api/types';
+import type { ProjectResponseDto, TaskResponseDto, TaskState, PomodoroSettings } from '../api/types';
 import { logActivity } from '../api/activityTracker';
 import { useToast } from '../components/ToastProvider';
 
@@ -38,15 +38,35 @@ export function FocusSession() {
     const [secondsLeft, setSecondsLeft] = useState(FOCUS_MINUTES * 60);
     const [completedSessions, setCompletedSessions] = useState(0);
     const [taskCompleted, setTaskCompleted] = useState(false);
+    const [showSettings, setShowSettings] = useState(false);
+    const [showTaskList, setShowTaskList] = useState(false);
+
+    const loadSettings = (): PomodoroSettings => {
+        try {
+            const raw = localStorage.getItem('pomodoroSettings');
+            if (raw) return JSON.parse(raw);
+        } catch {}
+        return {
+            focusMinutes: FOCUS_MINUTES,
+            shortBreakMinutes: SHORT_BREAK_MINUTES,
+            longBreakMinutes: LONG_BREAK_MINUTES,
+            sessionsBeforeLongBreak: SESSIONS_BEFORE_LONG_BREAK,
+        };
+    };
+
+    const saveSettings = (s: PomodoroSettings) => {
+        localStorage.setItem('pomodoroSettings', JSON.stringify(s));
+    };
+
+    const [settings, setSettings] = useState<PomodoroSettings>(loadSettings);
 
     const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-    /* Total duration for current mode */
     const totalSeconds = mode === 'focus'
-        ? FOCUS_MINUTES * 60
+        ? settings.focusMinutes * 60
         : mode === 'short-break'
-            ? SHORT_BREAK_MINUTES * 60
-            : LONG_BREAK_MINUTES * 60;
+            ? settings.shortBreakMinutes * 60
+            : settings.longBreakMinutes * 60;
 
     const progressPct = totalSeconds > 0 ? ((totalSeconds - secondsLeft) / totalSeconds) * 100 : 0;
 
@@ -87,7 +107,6 @@ export function FocusSession() {
         return () => {
             if (intervalRef.current) clearInterval(intervalRef.current);
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [timerState]);
 
     const handleTimerComplete = () => {
@@ -97,28 +116,24 @@ export function FocusSession() {
             setCompletedSessions(newCompleted);
             logActivity('focus_session');
             showToast('Focus session completed! 🎯');
-            // Increment project sessions
             if (project) {
                 updateProject(project.projectId, { sessions: (project.sessions ?? 0) + 1 }).catch(() => {});
             }
-            // Switch to break
-            if (newCompleted % SESSIONS_BEFORE_LONG_BREAK === 0) {
+            if (newCompleted % settings.sessionsBeforeLongBreak === 0) {
                 setMode('long-break');
-                setSecondsLeft(LONG_BREAK_MINUTES * 60);
+                setSecondsLeft(settings.longBreakMinutes * 60);
             } else {
                 setMode('short-break');
-                setSecondsLeft(SHORT_BREAK_MINUTES * 60);
+                setSecondsLeft(settings.shortBreakMinutes * 60);
             }
         } else {
-            // Break is over, back to focus
             setMode('focus');
-            setSecondsLeft(FOCUS_MINUTES * 60);
+            setSecondsLeft(settings.focusMinutes * 60);
         }
     };
 
     const startTimer = () => {
         if (timerState === 'idle') {
-            // If starting fresh, set the correct time
             if (secondsLeft === 0) {
                 setSecondsLeft(totalSeconds);
             }
@@ -146,10 +161,10 @@ export function FocusSession() {
                 updateProject(project.projectId, { sessions: (project.sessions ?? 0) + 1 }).catch(() => {});
             }
             setMode('short-break');
-            setSecondsLeft(SHORT_BREAK_MINUTES * 60);
+            setSecondsLeft(settings.shortBreakMinutes * 60);
         } else {
             setMode('focus');
-            setSecondsLeft(FOCUS_MINUTES * 60);
+            setSecondsLeft(settings.focusMinutes * 60);
         }
     };
 
@@ -161,7 +176,6 @@ export function FocusSession() {
             setTaskCompleted(true);
             setTimeout(() => {
                 setTaskCompleted(false);
-                // Move to next task or reload
                 loadProject().then(() => {
                     if (currentTaskIndex >= activeTasks.length - 1) {
                         setCurrentTaskIndex(0);
@@ -214,10 +228,8 @@ export function FocusSession() {
 
     return (
         <div className="font-display bg-background-light dark:bg-background-dark text-gray-900 dark:text-neutral-400 min-h-screen flex flex-col relative overflow-hidden selection:bg-primary/30">
-            {/* Subtle radial gradient */}
             <div className="absolute inset-0 z-0 focus-gradient pointer-events-none opacity-60 dark:opacity-20" />
 
-            {/* Progress bar at top */}
             <div className="absolute top-0 left-0 w-full h-[2px] bg-gray-200 dark:bg-neutral-900 z-50">
                 <div
                     className="h-full bg-primary shadow-[0_0_15px_rgba(56,189,248,0.5)] transition-all duration-1000 ease-linear"
@@ -225,7 +237,6 @@ export function FocusSession() {
                 />
             </div>
 
-            {/* Header */}
             <header className="relative z-10 flex items-center justify-between w-full px-6 md:px-8 py-5">
                 <div className="flex items-center gap-4">
                     <div className="flex items-center gap-2 text-gray-400 dark:text-neutral-600 cursor-default select-none">
@@ -241,20 +252,34 @@ export function FocusSession() {
                         </div>
                     )}
                 </div>
-                <button
-                    onClick={handleExit}
-                    className="group flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-200/50 dark:hover:bg-white/5 transition-all text-gray-400 hover:text-gray-900 dark:text-neutral-600 dark:hover:text-white"
-                    title="Exit Focus Mode"
-                >
-                    <span className="material-symbols-outlined text-2xl transition-transform group-hover:rotate-90">
-                        fullscreen_exit
-                    </span>
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => setShowSettings(true)}
+                        className="group flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-200/50 dark:hover:bg-white/5 transition-all text-gray-400 hover:text-gray-900 dark:text-neutral-600 dark:hover:text-white"
+                        title="Timer Settings"
+                    >
+                        <span className="material-symbols-outlined text-xl">settings</span>
+                    </button>
+                    <button
+                        onClick={() => setShowTaskList(!showTaskList)}
+                        className={`group flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-200/50 dark:hover:bg-white/5 transition-all ${showTaskList ? 'text-primary' : 'text-gray-400 hover:text-gray-900 dark:text-neutral-600 dark:hover:text-white'}`}
+                        title="Task List"
+                    >
+                        <span className="material-symbols-outlined text-xl">checklist</span>
+                    </button>
+                    <button
+                        onClick={handleExit}
+                        className="group flex items-center justify-center w-10 h-10 rounded-full hover:bg-gray-200/50 dark:hover:bg-white/5 transition-all text-gray-400 hover:text-gray-900 dark:text-neutral-600 dark:hover:text-white"
+                        title="Exit Focus Mode"
+                    >
+                        <span className="material-symbols-outlined text-2xl transition-transform group-hover:rotate-90">
+                            fullscreen_exit
+                        </span>
+                    </button>
+                </div>
             </header>
 
-            {/* Main content */}
             <main className="relative z-10 flex-grow flex flex-col items-center justify-center w-full max-w-4xl mx-auto px-4 -mt-8">
-                {/* Timer */}
                 <div className="flex flex-col items-center mb-16 md:mb-20">
                     <div className="relative group cursor-default">
                         <h1 className="text-[100px] md:text-[140px] leading-none font-extrabold tracking-tighter text-gray-800 dark:text-gray-200 tabular-nums select-none drop-shadow-sm dark:drop-shadow-[0_0_50px_rgba(255,255,255,0.08)]">
@@ -267,7 +292,6 @@ export function FocusSession() {
                         </div>
                     </div>
 
-                    {/* Mode pills – visible when idle */}
                     {timerState === 'idle' && (
                         <div className="flex items-center gap-2 mt-12">
                             {(['focus', 'short-break', 'long-break'] as TimerMode[]).map(m => (
@@ -276,9 +300,9 @@ export function FocusSession() {
                                     onClick={() => {
                                         setMode(m);
                                         setSecondsLeft(
-                                            m === 'focus' ? FOCUS_MINUTES * 60
-                                                : m === 'short-break' ? SHORT_BREAK_MINUTES * 60
-                                                    : LONG_BREAK_MINUTES * 60
+                                            m === 'focus' ? settings.focusMinutes * 60
+                                                : m === 'short-break' ? settings.shortBreakMinutes * 60
+                                                    : settings.longBreakMinutes * 60
                                         );
                                     }}
                                     className={`px-4 py-2 rounded-full text-xs font-bold transition-all ${
@@ -294,15 +318,12 @@ export function FocusSession() {
                     )}
                 </div>
 
-                {/* Task Card */}
                 {currentTask && (
                     <div className="w-full max-w-[520px] transform transition-all hover:-translate-y-1 hover:shadow-2xl duration-500 ease-out">
                         <div className={`bg-white dark:bg-surface-dark rounded-xl shadow-xl border border-gray-100 dark:border-neutral-800 p-0 overflow-hidden group relative transition-all duration-300 ${taskCompleted ? 'scale-95 opacity-50' : ''}`}>
-                            {/* Left accent bar */}
                             <div className="absolute top-0 left-0 w-1 h-full bg-primary/80 group-hover:bg-primary transition-colors" />
 
                             <div className="p-5 md:p-6 flex items-start gap-4 md:gap-5">
-                                {/* Checkbox */}
                                 <div className="pt-1 flex-shrink-0">
                                     <div className="relative w-6 h-6">
                                         <input
@@ -317,7 +338,6 @@ export function FocusSession() {
                                     </div>
                                 </div>
 
-                                {/* Content */}
                                 <div className="flex-grow min-w-0">
                                     <h2 className="text-lg md:text-xl font-bold text-gray-800 dark:text-neutral-300 leading-tight mb-3 truncate pr-2">
                                         {currentTask.taskName}
@@ -337,7 +357,6 @@ export function FocusSession() {
                                     </div>
                                 </div>
 
-                                {/* Task nav */}
                                 {activeTasks.length > 1 && (
                                     <div className="flex flex-col gap-1 shrink-0">
                                         <button
@@ -364,7 +383,6 @@ export function FocusSession() {
                     </div>
                 )}
 
-                {/* Empty state */}
                 {activeTasks.length === 0 && (
                     <div className="text-center text-gray-400 dark:text-neutral-600">
                         <span className="material-symbols-outlined text-[40px] mb-2">task_alt</span>
@@ -376,7 +394,6 @@ export function FocusSession() {
                 )}
             </main>
 
-            {/* Footer controls */}
             <footer className="relative z-10 w-full flex justify-center pb-8 md:pb-12">
                 <div className="flex items-center gap-1 p-1.5 bg-white dark:bg-surface-dark border border-gray-200 dark:border-neutral-800 rounded-full shadow-[0_4px_20px_rgba(0,0,0,0.08)] dark:shadow-none backdrop-blur-sm">
                     {timerState === 'idle' ? (
@@ -440,6 +457,167 @@ export function FocusSession() {
                     )}
                 </div>
             </footer>
+
+            {showTaskList && (
+                <div className="fixed right-0 top-0 h-full w-80 bg-white dark:bg-surface-dark border-l border-gray-200 dark:border-neutral-800 shadow-2xl z-50 flex flex-col">
+                    <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-neutral-800">
+                        <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100">Task Queue</h3>
+                        <button onClick={() => setShowTaskList(false)} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                            <span className="material-symbols-outlined text-[20px]">close</span>
+                        </button>
+                    </div>
+                    <div className="flex-1 overflow-y-auto">
+                        {activeTasks.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center h-full text-gray-400 dark:text-neutral-600">
+                                <span className="material-symbols-outlined text-[32px] mb-2">task_alt</span>
+                                <p className="text-sm">All tasks completed!</p>
+                            </div>
+                        ) : (
+                            activeTasks.map((task, idx) => (
+                                <button
+                                    key={task.id}
+                                    onClick={() => { setCurrentTaskIndex(idx); setShowTaskList(false); }}
+                                    className={`w-full text-left px-5 py-3.5 border-b border-gray-100 dark:border-neutral-800/50 flex items-center gap-3 transition-colors ${
+                                        idx === currentTaskIndex
+                                            ? 'bg-primary/10 border-l-2 border-l-primary'
+                                            : 'hover:bg-gray-50 dark:hover:bg-neutral-900/50'
+                                    }`}
+                                >
+                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                                        idx === currentTaskIndex
+                                            ? 'bg-primary text-white'
+                                            : 'bg-gray-100 dark:bg-neutral-800 text-gray-500 dark:text-neutral-400'
+                                    }`}>
+                                        {idx + 1}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className={`text-sm font-medium truncate ${
+                                            idx === currentTaskIndex
+                                                ? 'text-primary'
+                                                : 'text-gray-800 dark:text-gray-200'
+                                        }`}>
+                                            {task.taskName}
+                                        </p>
+                                        {task.description && (
+                                            <p className="text-xs text-gray-500 dark:text-neutral-500 truncate mt-0.5">
+                                                {task.description}
+                                            </p>
+                                        )}
+                                    </div>
+                                    {idx === currentTaskIndex && (
+                                        <span className="material-symbols-outlined text-primary text-[16px] flex-shrink-0">arrow_back</span>
+                                    )}
+                                </button>
+                            ))
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {showSettings && (
+                <PomodoroSettingsModal
+                    settings={settings}
+                    onSave={(s) => {
+                        setSettings(s);
+                        saveSettings(s);
+                        if (timerState === 'idle') {
+                            setSecondsLeft(
+                                mode === 'focus' ? s.focusMinutes * 60
+                                    : mode === 'short-break' ? s.shortBreakMinutes * 60
+                                        : s.longBreakMinutes * 60
+                            );
+                        }
+                        setShowSettings(false);
+                    }}
+                    onClose={() => setShowSettings(false)}
+                />
+            )}
+        </div>
+    );
+}
+
+interface PomodoroSettingsModalProps {
+    settings: PomodoroSettings;
+    onSave: (s: PomodoroSettings) => void;
+    onClose: () => void;
+}
+
+function PomodoroSettingsModal({ settings, onSave, onClose }: PomodoroSettingsModalProps) {
+    const [focus, setFocus] = useState(settings.focusMinutes);
+    const [shortBreak, setShortBreak] = useState(settings.shortBreakMinutes);
+    const [longBreak, setLongBreak] = useState(settings.longBreakMinutes);
+    const [rounds, setRounds] = useState(settings.sessionsBeforeLongBreak);
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+            <div className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-neutral-800 rounded-xl shadow-2xl w-full max-w-sm mx-4 p-6">
+                <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">Timer Settings</h3>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+                        <span className="material-symbols-outlined">close</span>
+                    </button>
+                </div>
+                <div className="flex flex-col gap-4">
+                    <SettingsField label="Focus Duration" value={focus} onChange={setFocus} min={1} max={120} unit="min" />
+                    <SettingsField label="Short Break" value={shortBreak} onChange={setShortBreak} min={1} max={30} unit="min" />
+                    <SettingsField label="Long Break" value={longBreak} onChange={setLongBreak} min={1} max={60} unit="min" />
+                    <SettingsField label="Sessions before Long Break" value={rounds} onChange={setRounds} min={1} max={10} unit="" />
+                </div>
+                <div className="flex gap-2 mt-6 pt-4 border-t border-gray-200 dark:border-neutral-800">
+                    <button
+                        onClick={() => { setFocus(25); setShortBreak(5); setLongBreak(15); setRounds(4); }}
+                        className="text-xs text-gray-500 dark:text-gray-400 hover:text-primary transition-colors"
+                    >
+                        Reset defaults
+                    </button>
+                    <div className="flex-1" />
+                    <button
+                        onClick={onClose}
+                        className="px-4 py-2 rounded-lg border border-gray-200 dark:border-neutral-800 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-neutral-900"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={() => onSave({
+                            focusMinutes: focus,
+                            shortBreakMinutes: shortBreak,
+                            longBreakMinutes: longBreak,
+                            sessionsBeforeLongBreak: rounds,
+                        })}
+                        className="px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-dark transition-colors"
+                    >
+                        Save
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function SettingsField({ label, value, onChange, min, max, unit }: {
+    label: string; value: number; onChange: (v: number) => void; min: number; max: number; unit: string;
+}) {
+    return (
+        <div className="flex items-center justify-between">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">{label}</label>
+            <div className="flex items-center gap-2">
+                <button
+                    onClick={() => onChange(Math.max(min, value - 1))}
+                    className="w-8 h-8 rounded-lg border border-gray-200 dark:border-neutral-800 flex items-center justify-center text-gray-500 hover:text-primary hover:border-primary transition-colors"
+                >
+                    <span className="material-symbols-outlined text-[16px]">remove</span>
+                </button>
+                <span className="w-10 text-center text-sm font-bold text-gray-900 dark:text-white tabular-nums">
+                    {value}
+                </span>
+                <button
+                    onClick={() => onChange(Math.min(max, value + 1))}
+                    className="w-8 h-8 rounded-lg border border-gray-200 dark:border-neutral-800 flex items-center justify-center text-gray-500 hover:text-primary hover:border-primary transition-colors"
+                >
+                    <span className="material-symbols-outlined text-[16px]">add</span>
+                </button>
+                {unit && <span className="text-xs text-gray-500 dark:text-gray-400 w-6">{unit}</span>}
+            </div>
         </div>
     );
 }

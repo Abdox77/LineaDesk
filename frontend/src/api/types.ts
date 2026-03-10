@@ -76,13 +76,26 @@ export interface BulkTaskStateDto {
     state: TaskState;
 }
 
-export type HabitType = 'DAILY' | 'WEEKLY' | 'MONTHLY';
+export type HabitType = 'FITNESS' | 'MENTAL_WELLBEING' | 'INTELLECTUAL';
 
 export interface HabitResponseDto {
     id: number;
     habitName: string;
     type: HabitType;
     streaks: number;
+}
+
+export interface HabitRequestDto {
+    habitName: string;
+    type?: HabitType;
+    streaks?: number;
+}
+
+export interface HabitLogResponseDto {
+    id: number;
+    habitId: number;
+    date: string;
+    completed: boolean;
 }
 
 export type JournalVisibility = 'PUBLIC' | 'PRIVATE';
@@ -124,3 +137,48 @@ export type ActivityType =
     | 'project_updated'
     | 'project_deleted'
     | 'focus_session';
+
+export interface PomodoroSettings {
+    focusMinutes: number;
+    shortBreakMinutes: number;
+    longBreakMinutes: number;
+    sessionsBeforeLongBreak: number;
+}
+
+export interface GitHubCommitDto {
+    sha: string;
+    message: string;
+    authorName: string;
+    authorAvatar: string;
+    date: string;
+    url: string;
+}
+
+export interface GitHubPullRequestDto {
+    number: number;
+    title: string;
+    state: string;
+    authorName: string;
+    authorAvatar: string;
+    createdAt: string;
+    url: string;
+}
+
+export interface ProjectInviteResponseDto {
+    id: number;
+    token: string;
+    status: string;
+    projectId: number;
+    projectName: string;
+    createdAt: string;
+    expiresAt: string;
+}
+
+export interface ProjectMemberResponseDto {
+    id: number;
+    userId: number;
+    username: string;
+    email: string;
+    role: string;
+}
+
