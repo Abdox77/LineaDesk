@@ -14,6 +14,10 @@ import type {
     GitHubPullRequestDto,
     ProjectInviteResponseDto,
     ProjectMemberResponseDto,
+    JournalResponseDto,
+    JournalRequestDto,
+    PageResponseDto,
+    PageRequestDto,
 } from './types';
 
 export async function fetchProjects(): Promise<ProjectResponseDto[]> {
@@ -158,5 +162,55 @@ export async function fetchGitHubPullRequests(owner: string, repo: string): Prom
     } catch {
         return [];
     }
+}
+
+
+export async function fetchJournals(): Promise<JournalResponseDto[]> {
+    const { data } = await api.get<ApiResponse<JournalResponseDto[]>>('/api/journals');
+    return data.data ?? [];
+}
+
+export async function fetchJournal(id: number): Promise<JournalResponseDto> {
+    const { data } = await api.get<ApiResponse<JournalResponseDto>>(`/api/journal/${id}`);
+    return data.data;
+}
+
+export async function createJournal(req: JournalRequestDto): Promise<JournalResponseDto> {
+    const { data } = await api.post<ApiResponse<JournalResponseDto>>('/api/journal', req);
+    return data.data;
+}
+
+export async function updateJournal(id: number, req: Partial<JournalRequestDto>): Promise<JournalResponseDto> {
+    const { data } = await api.put<ApiResponse<JournalResponseDto>>(`/api/journal/${id}`, req);
+    return data.data;
+}
+
+export async function deleteJournal(id: number): Promise<void> {
+    await api.delete(`/api/journal/${id}`);
+}
+
+
+export async function fetchPagesByJournal(journalId: number): Promise<PageResponseDto[]> {
+    const { data } = await api.get<ApiResponse<PageResponseDto[]>>(`/api/journal/${journalId}/pages`);
+    return data.data ?? [];
+}
+
+export async function fetchPage(id: number): Promise<PageResponseDto> {
+    const { data } = await api.get<ApiResponse<PageResponseDto>>(`/api/page/${id}`);
+    return data.data;
+}
+
+export async function createPage(req: PageRequestDto): Promise<PageResponseDto> {
+    const { data } = await api.post<ApiResponse<PageResponseDto>>('/api/page', req);
+    return data.data;
+}
+
+export async function updatePage(id: number, req: Partial<PageRequestDto>): Promise<PageResponseDto> {
+    const { data } = await api.put<ApiResponse<PageResponseDto>>(`/api/page/${id}`, req);
+    return data.data;
+}
+
+export async function deletePage(id: number): Promise<void> {
+    await api.delete(`/api/page/${id}`);
 }
 

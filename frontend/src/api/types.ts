@@ -113,11 +113,22 @@ export interface PageResponseDto {
     updatedAt: string;
 }
 
+export interface PageRequestDto {
+    title: string;
+    content?: string;
+    journalId: number;
+}
+
 export interface JournalResponseDto {
     id: number;
     name: string;
     visibility: JournalVisibility;
     pages: PageResponseDto[];
+}
+
+export interface JournalRequestDto {
+    name: string;
+    visibility?: JournalVisibility;
 }
 
 export interface ActivityRequestDto {

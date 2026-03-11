@@ -80,7 +80,6 @@ class TaskControllersTest {
         taskResponse.setImportance(TASK_IMPORTANCE.IMPORTANT);
     }
 
-    // ========== POST /api/task ==========
 
     @Test @WithMockUser
     void createTask_Success() throws Exception {
@@ -115,7 +114,6 @@ class TaskControllersTest {
                 .andExpect(status().isInternalServerError());
     }
 
-    // ========== GET /api/task/{id} ==========
 
     @Test @WithMockUser
     void getTask_Success() throws Exception {
@@ -142,7 +140,6 @@ class TaskControllersTest {
                 .andExpect(status().isInternalServerError());
     }
 
-    // ========== PUT /api/task/{id} ==========
 
     @Test @WithMockUser
     void updateTask_Success() throws Exception {
@@ -181,7 +178,6 @@ class TaskControllersTest {
                 .andExpect(status().isInternalServerError());
     }
 
-    // ========== DELETE /api/task/{id} ==========
 
     @Test @WithMockUser
     void deleteTask_Success() throws Exception {
@@ -206,7 +202,6 @@ class TaskControllersTest {
                 .andExpect(status().isInternalServerError());
     }
 
-    // ========== Auth test ==========
 
     @Test
     void createTask_Unauthenticated_ReturnsUnauthorized() throws Exception {

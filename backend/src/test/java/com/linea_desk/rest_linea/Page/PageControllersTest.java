@@ -165,10 +165,10 @@ class PageControllersTest {
     void updatePage_Success() throws Exception {
         PageResponseDto updated = new PageResponseDto();
         updated.setTitle("Updated Page"); updated.setContent("Updated content"); updated.setJournalId(1L);
-        when(pageServices.updatePage(eq(1L), any(PageRequestDto.class), any(User.class)))
+        when(pageServices.updatePage(eq(1L), any(PageUpdateRequestDto.class), any(User.class)))
                 .thenReturn(updated);
-        PageRequestDto req = new PageRequestDto();
-        req.setTitle("Updated Page"); req.setContent("Updated content"); req.setJournalId(1L);
+        PageUpdateRequestDto req = new PageUpdateRequestDto();
+        req.setTitle("Updated Page"); req.setContent("Updated content");
         mockMvc.perform(put("/api/page/1").with(csrf()).with(user(testUser))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
@@ -178,7 +178,7 @@ class PageControllersTest {
 
     @Test @WithMockUser
     void updatePage_NotFound() throws Exception {
-        when(pageServices.updatePage(eq(999L), any(PageRequestDto.class), any(User.class)))
+        when(pageServices.updatePage(eq(999L), any(PageUpdateRequestDto.class), any(User.class)))
                 .thenThrow(new ResourceNotFoundException("Page", 999L));
         mockMvc.perform(put("/api/page/999").with(csrf()).with(user(testUser))
                         .contentType(MediaType.APPLICATION_JSON)
@@ -188,7 +188,7 @@ class PageControllersTest {
 
     @Test @WithMockUser
     void updatePage_ServiceThrowsException_ReturnsInternalServerError() throws Exception {
-        when(pageServices.updatePage(eq(1L), any(PageRequestDto.class), any(User.class)))
+        when(pageServices.updatePage(eq(1L), any(PageUpdateRequestDto.class), any(User.class)))
                 .thenThrow(new RuntimeException("DB error"));
         mockMvc.perform(put("/api/page/1").with(csrf()).with(user(testUser))
                         .contentType(MediaType.APPLICATION_JSON)

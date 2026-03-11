@@ -76,7 +76,6 @@ class JournalControllersTest {
         journalResponse.setPages(Collections.emptyList());
     }
 
-    // ========== POST /api/journal ==========
 
     @Test @WithMockUser
     void createNewJournal_Success() throws Exception {
@@ -102,7 +101,6 @@ class JournalControllersTest {
                 .andExpect(jsonPath("$.success").value(false));
     }
 
-    // ========== GET /api/journal/{id} ==========
 
     @Test @WithMockUser
     void getJournalById_Success() throws Exception {
@@ -132,7 +130,6 @@ class JournalControllersTest {
                 .andExpect(jsonPath("$.success").value(false));
     }
 
-    // ========== GET /api/journals ==========
 
     @Test @WithMockUser
     void getJournalsList_Success() throws Exception {
@@ -153,7 +150,6 @@ class JournalControllersTest {
                 .andExpect(status().isInternalServerError());
     }
 
-    // ========== PUT /api/journal/{id} ==========
 
     @Test @WithMockUser
     void updateJournal_Success() throws Exception {
@@ -190,7 +186,6 @@ class JournalControllersTest {
                 .andExpect(status().isInternalServerError());
     }
 
-    // ========== DELETE /api/journal/{id} ==========
 
     @Test @WithMockUser
     void deleteJournal_Success() throws Exception {
@@ -215,7 +210,6 @@ class JournalControllersTest {
                 .andExpect(status().isInternalServerError());
     }
 
-    // ========== Auth test ==========
 
     @Test
     void createJournal_Unauthenticated_ReturnsUnauthorized() throws Exception {

@@ -65,7 +65,7 @@ public class PageControllers {
     public ResponseEntity<ApiResponse<?>> updatePage(
             @AuthenticationPrincipal User user,
             @PathVariable Long id,
-            @Valid @RequestBody PageRequestDto request
+            @RequestBody PageUpdateRequestDto request
     ) {
         PageResponseDto page = pageServices.updatePage(id, request, user);
         ApiResponse<?> response = new ApiResponse<>(true, "Page updated successfully", page);
