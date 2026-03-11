@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import type { TaskResponseDto, TaskState, TaskImportance, TaskRequestDto } from '../api/types';
+import type { ProjectMemberResponseDto } from '../api/types';
 
 interface TaskModalProps {
     projectId: number;
     task: TaskResponseDto | null;
     defaultState: TaskState;
+    members?: ProjectMemberResponseDto[];
     onSave: (data: TaskRequestDto) => Promise<void>;
     onClose: () => void;
 }
@@ -22,7 +24,7 @@ const STATE_OPTIONS: { value: TaskState; label: string }[] = [
     { value: 'FINISHED', label: 'Done' },
 ];
 
-export function TaskModal({ projectId, task, defaultState, onSave, onClose }: TaskModalProps) {
+export function TaskModal({ projectId, task, defaultState, members = [], onSave, onClose }: TaskModalProps) {
     const isEdit = task !== null;
     const [taskName, setTaskName] = useState(task?.taskName ?? '');
     const [description, setDescription] = useState(task?.description ?? '');
@@ -30,6 +32,7 @@ export function TaskModal({ projectId, task, defaultState, onSave, onClose }: Ta
     const [state, setState] = useState<TaskState>(task?.state ?? defaultState);
     const [importance, setImportance] = useState<TaskImportance>(task?.importance ?? 'NORMAL');
     const [dueDate, setDueDate] = useState(task?.dueDate ?? '');
+    const [assigneeId, setAssigneeId] = useState<number | null>(task?.assigneeId ?? null);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
 
@@ -50,6 +53,7 @@ export function TaskModal({ projectId, task, defaultState, onSave, onClose }: Ta
                 state,
                 importance,
                 dueDate: dueDate || null,
+                assigneeId: assigneeId ?? null,
             });
         } catch (err: any) {
             const msg = err?.message || 'Failed to save task';
@@ -161,6 +165,22 @@ export function TaskModal({ projectId, task, defaultState, onSave, onClose }: Ta
                             ))}
                         </div>
                     </div>
+
+                    {members.length > 0 && (
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Assign To</label>
+                            <select
+                                className="form-select w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-[#0d1117] h-10 px-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                                value={assigneeId ?? ''}
+                                onChange={(e) => setAssigneeId(e.target.value ? Number(e.target.value) : null)}
+                            >
+                                <option value="">Unassigned</option>
+                                {members.map((m) => (
+                                    <option key={m.userId} value={m.userId}>{m.username}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
 
                     <div className="flex gap-3 pt-2">
                         <button

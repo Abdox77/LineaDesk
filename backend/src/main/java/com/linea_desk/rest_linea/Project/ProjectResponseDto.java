@@ -2,6 +2,7 @@ package com.linea_desk.rest_linea.Project;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 import org.hibernate.Hibernate;
 
@@ -16,39 +17,30 @@ public class ProjectResponseDto {
     private Integer sessions;
     private PROJECT_STATE state;
     private Collection<TaskResponseDto> tasks;
+    private List<ProjectMemberResponseDto> members;
 
     public ProjectResponseDto() { }
 
     public ProjectResponseDto(Project project) {
+        this(project, Collections.emptyList());
+    }
+
+    public ProjectResponseDto(Project project, List<ProjectMemberResponseDto> members) {
         this.id = project.getProjectId();
         this.projectName = project.getProjectName();
         this.description = project.getDescription();
         this.state = project.getState();
-
-        if(project.getGithubLink() == null) {
-            this.githubLink = "";
-        }
-        else {
-            this.githubLink = project.getGithubLink();
-        }
-
-        if (project.getSessions() == null) {
-            this.sessions = 0;
-        }
-        else {
-            this.sessions = project.getSessions();
-        }
-
+        this.githubLink = project.getGithubLink() == null ? "" : project.getGithubLink();
+        this.sessions = project.getSessions() == null ? 0 : project.getSessions();
         if (project.getTasks() == null || !Hibernate.isInitialized(project.getTasks())) {
             this.tasks = Collections.emptyList();
-        }
-        else {
+        } else {
             this.tasks = project.getTasks().stream()
                     .map(TaskResponseDto::new)
                     .toList();
         }
+        this.members = members != null ? members : Collections.emptyList();
     }
-
 
     public Long getProjectId() { return id; }
 
@@ -69,4 +61,7 @@ public class ProjectResponseDto {
 
     public Collection<TaskResponseDto> getTasks() { return tasks; }
     public void setTasks(Collection<TaskResponseDto> tasks) { this.tasks = tasks; }
+
+    public List<ProjectMemberResponseDto> getMembers() { return members; }
+    public void setMembers(List<ProjectMemberResponseDto> members) { this.members = members; }
 }

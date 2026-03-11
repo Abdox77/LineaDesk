@@ -6,8 +6,8 @@ import { CSS } from '@dnd-kit/utilities';
 import { Sidebar } from '../components/Sidebar';
 import { useAuth } from '../auth/AuthContext';
 import { useToast } from '../components/ToastProvider';
-import { fetchProject, updateProject, createTask, updateTask, deleteTask, reorderTasks, bulkDeleteTasks, bulkUpdateTaskState, fetchGitHubCommits, fetchGitHubPullRequests } from '../api/endpoints';
-import type { ProjectResponseDto, ProjectState, TaskResponseDto, TaskState, TaskImportance, TaskRequestDto, GitHubCommitDto, GitHubPullRequestDto } from '../api/types';
+import { fetchProject, updateProject, createTask, updateTask, deleteTask, reorderTasks, bulkDeleteTasks, bulkUpdateTaskState, fetchGitHubCommits, fetchGitHubPullRequests, generateProjectInvite, removeProjectMember } from '../api/endpoints';
+import type { ProjectResponseDto, ProjectState, TaskResponseDto, TaskState, TaskImportance, TaskRequestDto, GitHubCommitDto, GitHubPullRequestDto, ProjectMemberResponseDto } from '../api/types';
 import { TaskModal } from '../components/TaskModal';
 import { EditProjectModal } from '../components/EditProjectModal';
 import { EmptyState, SkeletonRow } from '../components/EmptyState';
@@ -96,6 +96,8 @@ export function ProjectDetails() {
     const [selectedTasks, setSelectedTasks] = useState<Set<number>>(new Set());
     const [newTaskName, setNewTaskName] = useState('');
     const [menuOpenId, setMenuOpenId] = useState<number | null>(null);
+    const [showMembersPanel, setShowMembersPanel] = useState(false);
+    const [inviteCopied, setInviteCopied] = useState(false);
 
     const [searchQuery, setSearchQuery] = useState('');
     const [filterState, setFilterState] = useState<TaskState | 'ALL'>('ALL');
@@ -209,6 +211,31 @@ export function ProjectDetails() {
         }
     };
 
+    const handleInvite = async () => {
+        if (!project) return;
+        try {
+            const { token } = await generateProjectInvite(project.projectId);
+            const link = `${window.location.origin}/join?token=${token}`;
+            await navigator.clipboard.writeText(link);
+            setInviteCopied(true);
+            showToast('Invite link copied to clipboard!');
+            setTimeout(() => setInviteCopied(false), 3000);
+        } catch {
+            showToast('Failed to generate invite link', 'error');
+        }
+    };
+
+    const handleRemoveMember = async (userId: number) => {
+        if (!project) return;
+        try {
+            await removeProjectMember(project.projectId, userId);
+            showToast('Member removed', 'warning');
+            await loadProject();
+        } catch {
+            showToast('Failed to remove member', 'error');
+        }
+    };
+
     const openNewTask = () => {
         setEditingTask(null);
         setTaskModalOpen(true);
@@ -301,6 +328,22 @@ export function ProjectDetails() {
                     </nav>
                     <div className="flex items-center gap-3">
                         <button
+                            onClick={handleInvite}
+                            className="flex items-center gap-2 px-3.5 py-2 rounded-lg border border-gray-200 dark:border-border-dark text-gray-500 dark:text-text-secondary text-sm font-medium hover:text-gray-900 dark:hover:text-text-main hover:border-gray-400 dark:hover:border-text-secondary/40 transition-colors"
+                        >
+                            <span className="material-symbols-outlined text-[18px]">{inviteCopied ? 'check' : 'person_add'}</span>
+                            {inviteCopied ? 'Copied!' : 'Invite'}
+                        </button>
+                        {(project?.members?.length ?? 0) > 0 && (
+                            <button
+                                onClick={() => setShowMembersPanel(v => !v)}
+                                className="flex items-center gap-2 px-3.5 py-2 rounded-lg border border-gray-200 dark:border-border-dark text-gray-500 dark:text-text-secondary text-sm font-medium hover:text-gray-900 dark:hover:text-text-main hover:border-gray-400 dark:hover:border-text-secondary/40 transition-colors"
+                            >
+                                <span className="material-symbols-outlined text-[18px]">group</span>
+                                {project?.members?.length} member{(project?.members?.length ?? 0) !== 1 ? 's' : ''}
+                            </button>
+                        )}
+                        <button
                             onClick={() => setEditProjectOpen(true)}
                             className="flex items-center gap-2 px-3.5 py-2 rounded-lg border border-gray-200 dark:border-border-dark text-gray-500 dark:text-text-secondary text-sm font-medium hover:text-gray-900 dark:hover:text-text-main hover:border-gray-400 dark:hover:border-text-secondary/40 transition-colors"
                         >
@@ -354,6 +397,47 @@ export function ProjectDetails() {
                                 <span className="text-sm font-semibold text-gray-900 dark:text-gray-100 tabular-nums">{pct}%</span>
                             </div>
                         </section>
+
+                        {showMembersPanel && (project.members?.length ?? 0) > 0 && (
+                            <section className="rounded-xl border border-gray-200 dark:border-border-dark bg-white dark:bg-surface-dark p-5">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                                        <span className="material-symbols-outlined text-[18px] text-primary">group</span>
+                                        Team ({project.members.length})
+                                    </h2>
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                    {project.members.map((m) => (
+                                        <div key={m.userId} className="flex items-center justify-between py-2 px-3 rounded-lg bg-gray-50 dark:bg-surface-dark-alt">
+                                            <div className="flex items-center gap-3">
+                                                <div className="size-8 rounded-full bg-gradient-to-br from-primary to-sky-300 flex items-center justify-center text-white text-xs font-bold">
+                                                    {m.username.slice(0, 1).toUpperCase()}
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{m.username}</p>
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400">{m.email}</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                                                    m.role === 'OWNER'
+                                                        ? 'bg-amber-100 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400'
+                                                        : 'bg-primary/10 text-primary'
+                                                }`}>{m.role}</span>
+                                                {m.role !== 'OWNER' && (
+                                                    <button
+                                                        onClick={() => handleRemoveMember(m.userId)}
+                                                        className="text-gray-400 hover:text-red-500 transition-colors"
+                                                    >
+                                                        <span className="material-symbols-outlined text-[16px]">person_remove</span>
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
+                        )}
 
                         <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <button
@@ -464,7 +548,7 @@ export function ProjectDetails() {
                             )}
 
                             <div className="rounded-xl border border-gray-200 dark:border-border-dark bg-white dark:bg-surface-dark">
-                                <div className="grid grid-cols-[40px_1fr_120px_80px_90px_48px] items-center px-4 py-3 border-b border-gray-200 dark:border-border-dark text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                <div className="grid grid-cols-[40px_1fr_110px_90px_80px_90px_48px] items-center px-4 py-3 border-b border-gray-200 dark:border-border-dark text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     <div className="flex items-center justify-center">
                                         <input
                                             type="checkbox"
@@ -475,6 +559,7 @@ export function ProjectDetails() {
                                     </div>
                                     <div>Task</div>
                                     <div>Status</div>
+                                    <div>Assignee</div>
                                     <div>Due</div>
                                     <div>Duration</div>
                                     <div />
@@ -515,7 +600,7 @@ export function ProjectDetails() {
                                     </DndContext>
                                 )}
 
-                                <div className="grid grid-cols-[40px_1fr_120px_80px_90px_48px] items-center px-4 py-3 border-t border-gray-200 dark:border-border-dark">
+                                <div className="grid grid-cols-[40px_1fr_110px_90px_80px_90px_48px] items-center px-4 py-3 border-t border-gray-200 dark:border-border-dark">
                                     <div className="flex items-center justify-center">
                                         <span className="material-symbols-outlined text-[18px] text-gray-300 dark:text-gray-600">add</span>
                                     </div>
@@ -586,6 +671,7 @@ export function ProjectDetails() {
                     projectId={project.projectId}
                     task={editingTask}
                     defaultState={'PENDING'}
+                    members={project.members ?? []}
                     onSave={async (data: TaskRequestDto) => {
                         if (editingTask) {
                             await handleUpdateTask(editingTask.id, data);
@@ -643,7 +729,7 @@ function SortableTaskRow(props: SortableTaskRowProps) {
         <div
             ref={setNodeRef}
             style={style}
-            className={`grid grid-cols-[40px_1fr_120px_80px_90px_48px] items-center px-4 py-3 border-b border-gray-200 dark:border-border-dark group hover:bg-gray-50 dark:hover:bg-surface-dark-alt/50 transition-colors ${props.selected ? 'bg-primary/5' : ''}`}
+            className={`grid grid-cols-[40px_1fr_110px_90px_80px_90px_48px] items-center px-4 py-3 border-b border-gray-200 dark:border-border-dark group hover:bg-gray-50 dark:hover:bg-surface-dark-alt/50 transition-colors ${props.selected ? 'bg-primary/5' : ''}`}
         >
             <div className="flex items-center justify-center gap-1">
                 <span
@@ -679,6 +765,19 @@ function SortableTaskRow(props: SortableTaskRowProps) {
 
             <div>
                 <StatusBadge state={task.state} />
+            </div>
+
+            <div>
+                {task.assigneeUsername ? (
+                    <span className="inline-flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-400">
+                        <span className="size-5 rounded-full bg-gradient-to-br from-primary to-sky-300 flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0">
+                            {task.assigneeUsername.slice(0, 1).toUpperCase()}
+                        </span>
+                        <span className="truncate max-w-[70px]">{task.assigneeUsername}</span>
+                    </span>
+                ) : (
+                    <span className="text-xs text-gray-300 dark:text-gray-600">—</span>
+                )}
             </div>
 
             <div>

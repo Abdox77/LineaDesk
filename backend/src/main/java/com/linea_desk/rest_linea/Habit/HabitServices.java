@@ -22,6 +22,7 @@ public class HabitServices {
         this.habitLogRepository = habitLogRepository;
     }
 
+    @Transactional
     public HabitResponseDto createNewHabit(HabitRequestDto req, User user) {
         Habit habit = new Habit();
         habit.setHabitName(req.getHabitName());
@@ -36,6 +37,7 @@ public class HabitServices {
         return new HabitResponseDto(habit);
     }
 
+    @Transactional(readOnly = true)
     public HabitResponseDto getHabitById(Long id, User user) {
         Habit habit = habitRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Habit", id));
@@ -63,9 +65,6 @@ public class HabitServices {
         }
         if (req.getType() != null) {
             habit.setType(req.getType());
-        }
-        if (req.getStreaks() != null) {
-            habit.setStreaks(req.getStreaks());
         }
         habitRepository.save(habit);
         return new HabitResponseDto(habit);

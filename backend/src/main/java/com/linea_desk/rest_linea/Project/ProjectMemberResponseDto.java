@@ -5,7 +5,9 @@ public class ProjectMemberResponseDto {
     private String username;
     private String email;
     private String role;
+
     public ProjectMemberResponseDto() {}
+
     public ProjectMemberResponseDto(ProjectMember member) {
         this.id = member.getId();
         this.userId = member.getUser().getUserId();
@@ -13,6 +15,15 @@ public class ProjectMemberResponseDto {
         this.email = member.getUser().getEmail();
         this.role = member.getRole().name();
     }
+
+    public ProjectMemberResponseDto(Long userId, String username, String email, String role) {
+        this.id = null;
+        this.userId = userId;
+        this.username = username;
+        this.email = email;
+        this.role = role;
+    }
+
     public Long getId() { return id; }
     public Long getUserId() { return userId; }
     public String getUsername() { return username; }
