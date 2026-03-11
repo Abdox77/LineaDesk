@@ -68,7 +68,7 @@ public class HabitControllers {
     public ResponseEntity<ApiResponse<?>> updateHabit(
             @AuthenticationPrincipal User user,
             @PathVariable Long id,
-            @Valid @RequestBody HabitRequestDto request
+            @RequestBody HabitRequestDto request
     ) {
         HabitResponseDto habit = habitServices.updateHabit(id, request, user);
         ApiResponse<?> response = new ApiResponse<>(true, "Habit updated successfully", habit);

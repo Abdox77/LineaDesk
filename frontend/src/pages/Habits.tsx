@@ -183,16 +183,16 @@ export function Habits() {
                 <div className="max-w-6xl mx-auto px-6 py-8 md:px-10 lg:py-12 flex flex-col gap-8">
                     <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                         <div className="flex flex-col gap-1">
-                            <h1 className="text-3xl md:text-4xl font-black tracking-tight text-gray-900 dark:text-white leading-none">
+                            <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white leading-tight">
                                 Habit Tracker
                             </h1>
-                            <p className="text-gray-500 dark:text-gray-400 text-base">
+                            <p className="text-gray-500 dark:text-gray-400 mt-1">
                                 Stay consistent, stay productive.
                             </p>
                         </div>
                         <button
                             onClick={() => setShowCreateModal(true)}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-lg font-semibold shadow-lg shadow-primary/20 hover:bg-primary-dark transition-all text-sm"
+                            className="flex items-center gap-2 px-4 py-2.5 bg-primary text-white rounded-lg text-sm font-semibold shadow-md hover:bg-sky-600 transition-all"
                         >
                             <span className="material-symbols-outlined text-[18px]">add</span>
                             New Habit
@@ -266,15 +266,15 @@ export function Habits() {
                                             <button
                                                 key={habit.id}
                                                 onClick={() => handleToggleToday(habit)}
-                                                className={`group flex items-center justify-between p-4 rounded-lg transition-colors cursor-pointer text-left w-full ${
+                                                className={`group flex items-center justify-between p-4 rounded-lg border transition-colors cursor-pointer text-left w-full ${
                                                     done
-                                                        ? 'bg-primary/10 border border-primary/20'
-                                                        : 'bg-gray-50 dark:bg-surface-dark-alt/50 hover:bg-gray-100 dark:hover:bg-surface-dark-alt'
+                                                        ? 'bg-primary/10 border-primary/20 dark:border-primary/30'
+                                                        : 'bg-gray-50 dark:bg-surface-dark-alt/50 border-transparent hover:bg-gray-100 dark:hover:bg-surface-dark-alt'
                                                 }`}
                                             >
                                                 <div className="flex items-center gap-4">
                                                     <div
-                                                        className={`size-6 rounded flex items-center justify-center transition-all ${
+                                                        className={`size-6 rounded flex items-center justify-center transition-all flex-shrink-0 ${
                                                             done
                                                                 ? 'bg-primary text-white'
                                                                 : 'border-2 border-gray-300 dark:border-gray-600 text-transparent group-hover:border-primary'
@@ -286,14 +286,14 @@ export function Habits() {
                                                         <span className={`material-symbols-outlined text-[18px] ${HABIT_TYPE_COLORS[habit.type]}`}>
                                                             {HABIT_TYPE_ICONS[habit.type]}
                                                         </span>
-                                                        <span className={`font-medium ${done ? 'line-through opacity-70' : ''}`}>
+                                                        <span className={`text-sm font-medium ${done ? 'line-through text-gray-400 dark:text-gray-500' : 'text-gray-900 dark:text-gray-100'}`}>
                                                             {habit.habitName}
                                                         </span>
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-3">
-                                                    <span className={`text-xs font-bold ${done ? 'text-primary' : 'text-gray-500 dark:text-gray-400'}`}>
-                                                        {done ? 'Done' : 'Todo'}
+                                                    <span className={`text-xs font-bold ${done ? 'text-primary' : 'text-gray-400 dark:text-gray-500'}`}>
+                                                        {done ? 'Done ✓' : 'Todo'}
                                                     </span>
                                                     <button
                                                         onClick={(e) => {
@@ -310,7 +310,7 @@ export function Habits() {
                                     })}
                                     <button
                                         onClick={() => setShowCreateModal(true)}
-                                        className="mt-2 w-full py-3 border-2 border-dashed border-gray-200 dark:border-border-dark rounded-lg text-gray-500 dark:text-gray-400 text-sm font-medium hover:bg-gray-50 dark:hover:bg-surface-dark-alt/30 transition-colors"
+                                        className="mt-2 w-full py-3 border-2 border-dashed border-gray-200 dark:border-border-dark rounded-lg text-gray-500 dark:text-gray-400 text-sm font-medium hover:border-primary/40 hover:text-primary hover:bg-primary/5 transition-all"
                                     >
                                         + Add New Habit
                                     </button>
@@ -322,7 +322,7 @@ export function Habits() {
                             <div className="bg-primary p-6 rounded-xl text-white shadow-lg shadow-primary/20 relative overflow-hidden">
                                 <div className="relative z-10 flex flex-col gap-1">
                                     <span className="text-xs font-bold uppercase tracking-widest opacity-80">
-                                        Current Streak
+                                        Best Streak
                                     </span>
                                     <div className="flex items-end gap-2">
                                         <span className="text-5xl font-black">{bestStreak}</span>
@@ -341,7 +341,7 @@ export function Habits() {
                                 </span>
                             </div>
 
-                            <div className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-border-dark rounded-xl p-6 shadow-sm flex flex-col h-full">
+                            <div className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-border-dark rounded-xl p-6 shadow-sm flex flex-col flex-1">
                                 <h3 className="text-base font-bold text-gray-900 dark:text-white mb-6">
                                     Productivity Flow
                                 </h3>
@@ -452,12 +452,10 @@ function HabitHeatmapRow({ habit, logDates, completedDays, pct, today }: HabitHe
                             key={day.date}
                             title={`${day.date}${day.completed ? ' ✓' : ''}`}
                             className={`size-6 rounded-sm transition-colors ${
-                                day.completed
-                                    ? 'bg-primary'
-                                    : 'bg-gray-200 dark:bg-gray-700'
+                                day.completed ? 'bg-primary' : 'bg-gray-200 dark:bg-gray-700'
                             } ${
                                 day.isToday
-                                    ? 'ring-2 ring-primary/30 ring-offset-2 ring-offset-white dark:ring-offset-surface-dark'
+                                    ? 'ring-2 ring-primary/50 ring-offset-2 ring-offset-white dark:ring-offset-surface-dark'
                                     : ''
                             }`}
                         />
@@ -488,8 +486,11 @@ function HabitModal({ habit, onSave, onDelete, onClose }: HabitModalProps) {
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-            <div className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-border-dark rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={onClose}>
+            <div
+                className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-border-dark rounded-xl shadow-2xl w-full max-w-md mx-4 p-6"
+                onClick={(e) => e.stopPropagation()}
+            >
                 <div className="flex items-center justify-between mb-6">
                     <h3 className="text-lg font-bold text-gray-900 dark:text-white">
                         {habit ? 'Edit Habit' : 'New Habit'}
@@ -501,26 +502,29 @@ function HabitModal({ habit, onSave, onDelete, onClose }: HabitModalProps) {
 
                 <div className="flex flex-col gap-4">
                     <div>
-                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Habit Name</label>
+                        <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1 block">Habit Name</label>
                         <input
                             type="text"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSave()}
                             placeholder="e.g. LeetCode, Exercise, Read Docs..."
-                            className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-border-dark bg-white dark:bg-surface-dark-alt text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 outline-none focus:border-primary"
+                            autoFocus
+                            className="w-full px-3 py-2.5 rounded-lg border border-gray-200 dark:border-border-dark bg-white dark:bg-surface-dark-alt text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 outline-none focus:border-primary focus:ring-1 focus:ring-primary"
                         />
                     </div>
                     <div>
-                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Category</label>
+                        <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1 block">Category</label>
                         <div className="flex gap-2">
                             {(['FITNESS', 'MENTAL_WELLBEING', 'INTELLECTUAL'] as HabitType[]).map((t) => (
                                 <button
                                     key={t}
+                                    type="button"
                                     onClick={() => setType(t)}
                                     className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all border ${
                                         type === t
                                             ? 'bg-primary/10 text-primary border-primary/20'
-                                            : 'text-gray-500 dark:text-gray-400 border-gray-200 dark:border-border-dark hover:border-gray-400'
+                                            : 'text-gray-500 dark:text-gray-400 border-gray-200 dark:border-border-dark hover:border-primary/40'
                                     }`}
                                 >
                                     <span className={`material-symbols-outlined text-[16px] ${HABIT_TYPE_COLORS[t]}`}>
@@ -547,14 +551,14 @@ function HabitModal({ habit, onSave, onDelete, onClose }: HabitModalProps) {
                     <div className="flex gap-2">
                         <button
                             onClick={onClose}
-                            className="px-4 py-2 rounded-lg border border-gray-200 dark:border-border-dark text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-surface-dark-alt"
+                            className="px-4 py-2 rounded-lg border border-gray-200 dark:border-border-dark text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-surface-dark-alt transition-colors"
                         >
                             Cancel
                         </button>
                         <button
                             onClick={handleSave}
                             disabled={name.trim().length < 3 || saving}
-                            className="px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-dark transition-colors disabled:opacity-50"
+                            className="px-4 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 disabled:opacity-50"
                         >
                             {saving ? 'Saving...' : habit ? 'Update' : 'Create'}
                         </button>
@@ -564,4 +568,3 @@ function HabitModal({ habit, onSave, onDelete, onClose }: HabitModalProps) {
         </div>
     );
 }
-

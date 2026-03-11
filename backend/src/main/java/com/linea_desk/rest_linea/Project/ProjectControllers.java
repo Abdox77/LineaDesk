@@ -6,12 +6,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -42,7 +45,7 @@ public class ProjectControllers {
     }
 
     @GetMapping(path="/project/{id}")
-    public ResponseEntity<ApiResponse<?>> getUserProjects(
+    public ResponseEntity<ApiResponse<?>> getProjectById(
             @AuthenticationPrincipal User user,
             @PathVariable Long id
     ) {
@@ -78,6 +81,50 @@ public class ProjectControllers {
     ) {
         ProjectResponseDto project = projectServices.updateProject(id, request, user);
         ApiResponse<?> response = new ApiResponse<>(true, "Project updated successfully", project);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/project/{id}/invite")
+    public ResponseEntity<ApiResponse<?>> generateInvite(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long id
+    ) {
+        ProjectInvite invite = projectServices.generateInviteLink(id, user);
+        ApiResponse<?> response = new ApiResponse<>(true, "Invite generated", Map.of(
+                "token", invite.getToken(),
+                "expiresAt", invite.getExpiresAt().toString()
+        ));
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/projects/join")
+    public ResponseEntity<ApiResponse<?>> joinByInvite(
+            @AuthenticationPrincipal User user,
+            @RequestParam String token
+    ) {
+        ProjectResponseDto project = projectServices.joinByInvite(token, user);
+        ApiResponse<?> response = new ApiResponse<>(true, "Joined project successfully", project);
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/project/{id}/members")
+    public ResponseEntity<ApiResponse<?>> getMembers(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long id
+    ) {
+        List<ProjectMemberResponseDto> members = projectServices.getMembers(id, user);
+        ApiResponse<?> response = new ApiResponse<>(true, "Members retrieved", members);
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/project/{id}/member/{userId}")
+    public ResponseEntity<ApiResponse<?>> removeMember(
+            @AuthenticationPrincipal User user,
+            @PathVariable Long id,
+            @PathVariable Long userId
+    ) {
+        projectServices.removeMember(id, userId, user);
+        ApiResponse<?> response = new ApiResponse<>(true, "Member removed");
         return ResponseEntity.ok(response);
     }
 }

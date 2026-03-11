@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.linea_desk.rest_linea.Project.Project;
+import com.linea_desk.rest_linea.User.User;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -80,6 +81,10 @@ public class Task
     @JoinColumn(name = "parent_task_id")
     private Task parentTask;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assigned_to_user_id")
+    private User assignedTo;
+
     @OneToMany(mappedBy = "parentTask", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Task> subtasks = new ArrayList<>();
 
@@ -129,6 +134,9 @@ public class Task
 
     public Task getParentTask() { return parentTask; }
     public void setParentTask(Task parentTask) { this.parentTask = parentTask; }
+
+    public User getAssignedTo() { return assignedTo; }
+    public void setAssignedTo(User assignedTo) { this.assignedTo = assignedTo; }
 
     public List<Task> getSubtasks() { return subtasks; }
     public void setSubtasks(List<Task> subtasks) { this.subtasks = subtasks; }

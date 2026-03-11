@@ -6,8 +6,10 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 
 import com.linea_desk.rest_linea.Project.Project;
+import com.linea_desk.rest_linea.Project.ProjectMemberRepository;
 import com.linea_desk.rest_linea.Project.ProjectRepository;
 import com.linea_desk.rest_linea.User.User;
+import com.linea_desk.rest_linea.User.UserRepository;
 import com.linea_desk.rest_linea.common.exceptions.ResourceNotFoundException;
 import com.linea_desk.rest_linea.common.exceptions.UnauthorizedAccessException;
 
@@ -15,11 +17,21 @@ import com.linea_desk.rest_linea.common.exceptions.UnauthorizedAccessException;
 @Service
 public class TaskServices {
     private final TaskRepository taskRepository;
-    private final ProjectRepository projectRepository;    
+    private final ProjectRepository projectRepository;
+    private final ProjectMemberRepository projectMemberRepository;
+    private final UserRepository userRepository;
 
-    public TaskServices(TaskRepository taskRepository, ProjectRepository projectRepository) {
+    public TaskServices(TaskRepository taskRepository, ProjectRepository projectRepository,
+                        ProjectMemberRepository projectMemberRepository, UserRepository userRepository) {
         this.taskRepository = taskRepository;
         this.projectRepository = projectRepository;
+        this.projectMemberRepository = projectMemberRepository;
+        this.userRepository = userRepository;
+    }
+
+    private boolean hasAccess(Project project, User user) {
+        return project.getUser().getUserId().equals(user.getUserId())
+                || projectMemberRepository.existsByProjectIdAndUserId(project.getProjectId(), user.getUserId());
     }
 
     public TaskResponseDto convertToDto(Task task) {
@@ -30,12 +42,11 @@ public class TaskServices {
         Project project = projectRepository.findById(taskRequestDto.getProjectId())
                 .orElseThrow(() -> new ResourceNotFoundException("Project", taskRequestDto.getProjectId()));
 
-        if (!project.getUser().getUserId().equals(user.getUserId())) {
+        if (!hasAccess(project, user)) {
             throw new UnauthorizedAccessException();
         }
 
         Task task = new Task();
-
         task.setTaskName(taskRequestDto.getTaskName());
         task.setTaskDuration(taskRequestDto.getDuration());
         task.setTaskDescription(taskRequestDto.getDescription());
@@ -54,6 +65,11 @@ public class TaskServices {
                     .orElseThrow(() -> new ResourceNotFoundException("Parent Task", taskRequestDto.getParentTaskId()));
             task.setParentTask(parent);
         }
+        if (taskRequestDto.getAssigneeId() != null) {
+            User assignee = userRepository.findById(taskRequestDto.getAssigneeId())
+                    .orElseThrow(() -> new ResourceNotFoundException("User", taskRequestDto.getAssigneeId()));
+            task.setAssignedTo(assignee);
+        }
 
         taskRepository.save(task);
         return convertToDto(task);
@@ -62,19 +78,16 @@ public class TaskServices {
     public void deleteTaskById(Long id, User user) {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Task", id));
-
-        if (!task.getProject().getUser().getUserId().equals(user.getUserId())) {
+        if (!hasAccess(task.getProject(), user)) {
             throw new UnauthorizedAccessException();
         }
-
         taskRepository.delete(task);
     }
 
     public TaskResponseDto getTaskById(Long id, User user) {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Task", id));
-
-        if (!task.getProject().getUser().getUserId().equals(user.getUserId())) {
+        if (!hasAccess(task.getProject(), user)) {
             throw new UnauthorizedAccessException();
         }
         return convertToDto(task);
@@ -83,8 +96,7 @@ public class TaskServices {
     public TaskResponseDto updateTask(Long id, TaskRequestDto req, User user) {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Task", id));
-
-        if (!task.getProject().getUser().getUserId().equals(user.getUserId())) {
+        if (!hasAccess(task.getProject(), user)) {
             throw new UnauthorizedAccessException();
         }
 
@@ -101,7 +113,6 @@ public class TaskServices {
             task.setTaskImportance(req.getImportance());
         }
         task.setTaskDuration(req.getDuration());
-
         if (req.getSortOrder() != null) {
             task.setSortOrder(req.getSortOrder());
         }
@@ -113,6 +124,13 @@ public class TaskServices {
                     .orElseThrow(() -> new ResourceNotFoundException("Parent Task", req.getParentTaskId()));
             task.setParentTask(parent);
         }
+        if (req.getAssigneeId() != null) {
+            User assignee = userRepository.findById(req.getAssigneeId())
+                    .orElseThrow(() -> new ResourceNotFoundException("User", req.getAssigneeId()));
+            task.setAssignedTo(assignee);
+        } else {
+            task.setAssignedTo(null);
+        }
 
         taskRepository.save(task);
         return convertToDto(task);
@@ -122,11 +140,9 @@ public class TaskServices {
         for (TaskReorderDto item : reorderList) {
             Task task = taskRepository.findById(item.getId())
                     .orElseThrow(() -> new ResourceNotFoundException("Task", item.getId()));
-
-            if (!task.getProject().getUser().getUserId().equals(user.getUserId())) {
+            if (!hasAccess(task.getProject(), user)) {
                 throw new UnauthorizedAccessException();
             }
-
             task.setSortOrder(item.getSortOrder());
             taskRepository.save(task);
         }
@@ -136,11 +152,9 @@ public class TaskServices {
         for (Long taskId : taskIds) {
             Task task = taskRepository.findById(taskId)
                     .orElseThrow(() -> new ResourceNotFoundException("Task", taskId));
-
-            if (!task.getProject().getUser().getUserId().equals(user.getUserId())) {
+            if (!hasAccess(task.getProject(), user)) {
                 throw new UnauthorizedAccessException();
             }
-
             taskRepository.delete(task);
         }
     }
@@ -149,8 +163,7 @@ public class TaskServices {
         for (Long taskId : taskIds) {
             Task task = taskRepository.findById(taskId)
                     .orElseThrow(() -> new ResourceNotFoundException("Task", taskId));
-
-            if (!task.getProject().getUser().getUserId().equals(user.getUserId())) {
+            if (!hasAccess(task.getProject(), user)) {
                 throw new UnauthorizedAccessException();
             }
 

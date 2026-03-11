@@ -25,6 +25,7 @@ export interface ProjectResponseDto {
     sessions: number;
     state: ProjectState;
     tasks: TaskResponseDto[];
+    members: ProjectMemberResponseDto[];
 }
 
 export type ProjectState = 'PENDING' | 'IN_PROGRESS' | 'FINISHED';
@@ -52,6 +53,8 @@ export interface TaskResponseDto {
     dueDate: string | null;
     parentTaskId: number | null;
     subtasks: TaskResponseDto[];
+    assigneeId: number | null;
+    assigneeUsername: string | null;
 }
 
 export interface TaskRequestDto {
@@ -64,6 +67,7 @@ export interface TaskRequestDto {
     sortOrder?: number;
     dueDate?: string | null;
     parentTaskId?: number | null;
+    assigneeId?: number | null;
 }
 
 export interface TaskReorderItem {

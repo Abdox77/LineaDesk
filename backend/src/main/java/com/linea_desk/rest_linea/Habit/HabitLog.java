@@ -23,7 +23,7 @@ public class HabitLog {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "habit_id", nullable = false)
     private Habit habit;
 

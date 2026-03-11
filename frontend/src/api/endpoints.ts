@@ -104,6 +104,25 @@ export async function fetchAllHabitLogs(from: string, to: string): Promise<Habit
     return data.data ?? [];
 }
 
+export async function generateProjectInvite(projectId: number): Promise<{ token: string; expiresAt: string }> {
+    const { data } = await api.post<ApiResponse<{ token: string; expiresAt: string }>>(`/api/project/${projectId}/invite`);
+    return data.data;
+}
+
+export async function joinProjectByToken(token: string): Promise<ProjectResponseDto> {
+    const { data } = await api.post<ApiResponse<ProjectResponseDto>>(`/api/projects/join?token=${token}`);
+    return data.data;
+}
+
+export async function fetchProjectMembers(projectId: number): Promise<ProjectMemberResponseDto[]> {
+    const { data } = await api.get<ApiResponse<ProjectMemberResponseDto[]>>(`/api/project/${projectId}/members`);
+    return data.data ?? [];
+}
+
+export async function removeProjectMember(projectId: number, userId: number): Promise<void> {
+    await api.delete(`/api/project/${projectId}/member/${userId}`);
+}
+
 export async function fetchGitHubCommits(owner: string, repo: string): Promise<GitHubCommitDto[]> {
     try {
         const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/commits?per_page=10`);

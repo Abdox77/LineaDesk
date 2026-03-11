@@ -14,6 +14,7 @@ import { ProjectDetails } from './pages/ProjectDetails';
 import { Projects } from './pages/Projects';
 import { FocusSession } from './pages/FocusSession';
 import { Habits } from './pages/Habits';
+import { JoinProject } from './pages/JoinProject';
 
 function App() {
     return (
@@ -25,6 +26,7 @@ function App() {
                             <Route path='/login' element={<LoginCard />} />
                             <Route path='/register' element={<RegisterCard />} />
                             <Route path='/oauth/callback' element={<OAuthCallback />} />
+                            <Route path='/join' element={<JoinProject />} />
                             <Route
                                 path='/dashboard'
                                 element={

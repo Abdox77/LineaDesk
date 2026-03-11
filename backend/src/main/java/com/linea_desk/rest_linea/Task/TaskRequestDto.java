@@ -29,7 +29,7 @@ public class TaskRequestDto {
     private Integer sortOrder;
     private LocalDate dueDate;
     private Long parentTaskId;
-
+    private Long assigneeId;
 
     public TaskRequestDto() { }
 
@@ -61,4 +61,7 @@ public class TaskRequestDto {
 
     public Long getParentTaskId() { return parentTaskId; }
     public void setParentTaskId(Long parentTaskId) { this.parentTaskId = parentTaskId; }
+
+    public Long getAssigneeId() { return assigneeId; }
+    public void setAssigneeId(Long assigneeId) { this.assigneeId = assigneeId; }
 }

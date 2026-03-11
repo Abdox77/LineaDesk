@@ -18,6 +18,8 @@ public class TaskResponseDto {
     private LocalDate dueDate;
     private Long parentTaskId;
     private List<TaskResponseDto> subtasks;
+    private Long assigneeId;
+    private String assigneeUsername;
 
     public TaskResponseDto() { }
 
@@ -42,6 +44,11 @@ public class TaskResponseDto {
         this.dueDate = task.getDueDate();
         this.parentTaskId = (Hibernate.isInitialized(task.getParentTask()) && task.getParentTask() != null)
                 ? task.getParentTask().getTaskId() : null;
+
+        if (Hibernate.isInitialized(task.getAssignedTo()) && task.getAssignedTo() != null) {
+            this.assigneeId = task.getAssignedTo().getUserId();
+            this.assigneeUsername = task.getAssignedTo().getDisplayName();
+        }
 
         if (Hibernate.isInitialized(task.getSubtasks()) && task.getSubtasks() != null && !task.getSubtasks().isEmpty()) {
             this.subtasks = task.getSubtasks().stream()
@@ -97,4 +104,10 @@ public class TaskResponseDto {
 
     public List<TaskResponseDto> getSubtasks() { return subtasks; }
     public void setSubtasks(List<TaskResponseDto> subtasks) { this.subtasks = subtasks; }
+
+    public Long getAssigneeId() { return assigneeId; }
+    public void setAssigneeId(Long assigneeId) { this.assigneeId = assigneeId; }
+
+    public String getAssigneeUsername() { return assigneeUsername; }
+    public void setAssigneeUsername(String assigneeUsername) { this.assigneeUsername = assigneeUsername; }
 }
