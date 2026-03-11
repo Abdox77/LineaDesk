@@ -10,7 +10,7 @@ interface SidebarProps {
 const navItems = [
     { label: 'Dashboard', icon: 'pie_chart', href: '/dashboard' },
     { label: 'Projects', icon: 'folder', href: '/projects' },
-    { label: 'Analytics', icon: 'bar_chart', href: '/analytics' },
+    { label: 'Journal', icon: 'edit_note', href: '/journal' },
     { label: 'Habits', icon: 'check_circle', href: '/habits' },
 ];
 

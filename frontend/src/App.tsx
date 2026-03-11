@@ -14,6 +14,7 @@ import { ProjectDetails } from './pages/ProjectDetails';
 import { Projects } from './pages/Projects';
 import { FocusSession } from './pages/FocusSession';
 import { Habits } from './pages/Habits';
+import { Journal } from './pages/Journal';
 import { JoinProject } from './pages/JoinProject';
 
 function App() {
@@ -64,6 +65,14 @@ function App() {
                                 element={
                                     <RequireAuth>
                                         <Habits />
+                                    </RequireAuth>
+                                }
+                            />
+                            <Route
+                                path='/journal'
+                                element={
+                                    <RequireAuth>
+                                        <Journal />
                                     </RequireAuth>
                                 }
                             />

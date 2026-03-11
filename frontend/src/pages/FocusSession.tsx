@@ -32,7 +32,6 @@ export function FocusSession() {
     const [loading, setLoading] = useState(true);
     const [currentTaskIndex, setCurrentTaskIndex] = useState(0);
 
-    /* Timer state */
     const [mode, setMode] = useState<TimerMode>('focus');
     const [timerState, setTimerState] = useState<TimerState>('idle');
     const [secondsLeft, setSecondsLeft] = useState(FOCUS_MINUTES * 60);
@@ -85,7 +84,6 @@ export function FocusSession() {
         loadProject();
     }, [loadProject]);
 
-    /* Active tasks (non-finished) */
     const activeTasks = (project?.tasks ?? []).filter(t => t.state !== 'FINISHED');
     const currentTask: TaskResponseDto | undefined = activeTasks[currentTaskIndex];
 
@@ -466,7 +464,7 @@ export function FocusSession() {
                             <span className="material-symbols-outlined text-[20px]">close</span>
                         </button>
                     </div>
-                    <div className="flex-1 overflow-y-auto">
+                    <div className="flex-1 overflow-y-auto no-scrollbar">
                         {activeTasks.length === 0 ? (
                             <div className="flex flex-col items-center justify-center h-full text-gray-400 dark:text-neutral-600">
                                 <span className="material-symbols-outlined text-[32px] mb-2">task_alt</span>

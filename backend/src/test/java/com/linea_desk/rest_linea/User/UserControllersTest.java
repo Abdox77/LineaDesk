@@ -70,7 +70,6 @@ class UserControllersTest {
         registerRequest = new RegisterUserDto("test@example.com", "testuser", "password123");
     }
 
-    // ========== POST /auth/login ==========
 
     @Test
     void login_Success() throws Exception {
@@ -132,7 +131,6 @@ class UserControllersTest {
                 .andExpect(jsonPath("$.success").value(false));
     }
 
-    // ========== POST /auth/signup ==========
 
     @Test
     void signup_Success() throws Exception {

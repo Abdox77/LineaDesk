@@ -85,7 +85,7 @@ export function ActivityHeatmap({ refreshKey, scrollTrigger }: ActivityHeatmapPr
                         ))}
                     </div>
 
-                    <div className="flex-1 overflow-x-auto hide-scrollbar" ref={scrollRef}>
+                    <div className="flex-1 overflow-x-auto no-scrollbar" ref={scrollRef}>
                         <div className="relative">
                             <div className="relative" style={{ height: '14px', marginBottom: '4px' }}>
                                 {monthLabels.map((ml, i) => (

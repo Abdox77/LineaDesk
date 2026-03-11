@@ -10,7 +10,6 @@ body {
     font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
 
-/* ── Scrollbar ── */
 ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -32,7 +31,6 @@ body {
     background: #8b949e;
 }
 
-/* ── Heatmap scrollbar ── */
 .hide-scrollbar::-webkit-scrollbar {
     height: 6px;
 }
@@ -47,7 +45,14 @@ body {
     background-color: transparent;
 }
 
-/* ── Checkbox overrides ── */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
 .dark input[type="checkbox"] {
     background-color: transparent;
     border-color: #30363d;
@@ -61,12 +66,10 @@ body {
     border-color: #38bdf8;
 }
 
-/* ── Focus mode radial gradient ── */
 .focus-gradient {
     background: radial-gradient(circle at 50% 30%, rgba(255,255,255,0.04), transparent 70%);
 }
 
-/* ── Toast slide-in animation ── */
 @keyframes slide-in {
     from {
         opacity: 0;

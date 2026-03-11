@@ -57,7 +57,7 @@ public class PageServices {
                 .toList();
     }
 
-    public PageResponseDto updatePage(Long id, PageRequestDto req, User user) {
+    public PageResponseDto updatePage(Long id, PageUpdateRequestDto req, User user) {
         Page page = pageRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Page", id));
         if (!page.getJournal().getUser().getUserId().equals(user.getUserId())) {

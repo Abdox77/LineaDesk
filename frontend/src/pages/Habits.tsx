@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { Sidebar } from '../components/Sidebar';
 import { useAuth } from '../auth/AuthContext';
 import { useToast } from '../components/ToastProvider';
@@ -90,7 +90,7 @@ export function Habits() {
                 showToast('Habit unmarked');
             } else {
                 await logHabitDay(habit.id, today);
-                showToast('Habit completed! 🔥');
+                showToast('Habit completed!');
             }
             await loadData();
         } catch {
@@ -149,20 +149,6 @@ export function Habits() {
 
     const bestStreak = habits.reduce((max, h) => Math.max(max, getStreak(h.id)), 0);
 
-    const weekFlow = useMemo(() => {
-        const days: { label: string; count: number }[] = [];
-        for (let i = 6; i >= 0; i--) {
-            const d = new Date();
-            d.setDate(d.getDate() - i);
-            const ds = d.toISOString().slice(0, 10);
-            const dayLabel = d.toLocaleDateString('en-US', { weekday: 'short' });
-            const count = logs.filter((l) => l.date === ds).length;
-            days.push({ label: dayLabel, count });
-        }
-        return days;
-    }, [logs]);
-
-    const maxFlow = Math.max(...weekFlow.map((d) => d.count), 1);
 
     if (loading) {
         return (
@@ -179,7 +165,7 @@ export function Habits() {
         <div className="flex h-screen w-full bg-background-light dark:bg-background-dark font-display text-gray-900 dark:text-gray-200 overflow-hidden">
             <Sidebar displayName={`${displayName}'s Space`} />
 
-            <main className="flex-1 h-full overflow-y-auto overflow-x-hidden">
+            <main className="flex-1 h-full overflow-y-auto overflow-x-hidden no-scrollbar">
                 <div className="max-w-6xl mx-auto px-6 py-8 md:px-10 lg:py-12 flex flex-col gap-8">
                     <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                         <div className="flex flex-col gap-1">
@@ -200,125 +186,85 @@ export function Habits() {
                     </header>
 
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                        <section className="lg:col-span-12 bg-white dark:bg-surface-dark border border-gray-200 dark:border-border-dark rounded-xl p-6 shadow-sm overflow-hidden">
-                            <div className="flex items-center justify-between mb-6">
-                                <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                                    <span className="material-symbols-outlined text-primary">calendar_view_month</span>
-                                    Habit Heatmap (Last 30 Days)
-                                </h3>
-                                <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
-                                    <div className="flex items-center gap-1.5">
-                                        <div className="size-3 bg-gray-200 dark:bg-gray-700 rounded-sm" /> Empty
+                        
+                        <div className="lg:col-span-5 flex flex-col gap-6">
+                            <section className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-border-dark rounded-xl p-6 shadow-sm flex flex-col" style={{ maxHeight: '420px' }}>
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                        <span className="material-symbols-outlined text-primary">checklist</span>
+                                        Daily Checklist
+                                    </h3>
+                                    <span className="text-xs bg-gray-100 dark:bg-surface-dark-alt px-2 py-1 rounded text-gray-500 dark:text-gray-400">
+                                        {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                    </span>
+                                </div>
+
+                                {habits.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center py-12 text-gray-400 dark:text-gray-500">
+                                        <span className="material-symbols-outlined text-[32px] mb-2">inbox</span>
+                                        <p className="text-sm">No habits yet</p>
                                     </div>
-                                    <div className="flex items-center gap-1.5">
-                                        <div className="size-3 bg-primary rounded-sm" /> Completed
-                                    </div>
-                                </div>
-                            </div>
-
-                            {habits.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center py-12 text-gray-400 dark:text-gray-500">
-                                    <span className="material-symbols-outlined text-[40px] mb-2">check_circle</span>
-                                    <p className="text-sm">Create your first habit to see your heatmap</p>
-                                </div>
-                            ) : (
-                                <div className="flex flex-col gap-8">
-                                    {habits.map((habit) => {
-                                        const habitDates = logsByHabit.get(habit.id) ?? new Set<string>();
-                                        const completedDays = habitDates.size;
-                                        const pct = Math.round((completedDays / 30) * 100);
-                                        return (
-                                            <HabitHeatmapRow
-                                                key={habit.id}
-                                                habit={habit}
-                                                logDates={habitDates}
-                                                completedDays={completedDays}
-                                                pct={pct}
-                                                today={today}
-                                            />
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </section>
-
-                        <section className="lg:col-span-7 bg-white dark:bg-surface-dark border border-gray-200 dark:border-border-dark rounded-xl p-6 shadow-sm">
-                            <div className="flex items-center justify-between mb-6">
-                                <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                                    <span className="material-symbols-outlined text-primary">checklist</span>
-                                    Daily Checklist
-                                </h3>
-                                <span className="text-xs bg-gray-100 dark:bg-surface-dark-alt px-2 py-1 rounded text-gray-500 dark:text-gray-400">
-                                    {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                                </span>
-                            </div>
-
-                            {habits.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center py-12 text-gray-400 dark:text-gray-500">
-                                    <span className="material-symbols-outlined text-[32px] mb-2">inbox</span>
-                                    <p className="text-sm">No habits yet</p>
-                                </div>
-                            ) : (
-                                <div className="flex flex-col gap-3">
-                                    {habits.map((habit) => {
-                                        const done = logsByHabit.get(habit.id)?.has(today) ?? false;
-                                        return (
-                                            <button
-                                                key={habit.id}
-                                                onClick={() => handleToggleToday(habit)}
-                                                className={`group flex items-center justify-between p-4 rounded-lg border transition-colors cursor-pointer text-left w-full ${
-                                                    done
-                                                        ? 'bg-primary/10 border-primary/20 dark:border-primary/30'
-                                                        : 'bg-gray-50 dark:bg-surface-dark-alt/50 border-transparent hover:bg-gray-100 dark:hover:bg-surface-dark-alt'
-                                                }`}
-                                            >
-                                                <div className="flex items-center gap-4">
-                                                    <div
-                                                        className={`size-6 rounded flex items-center justify-center transition-all flex-shrink-0 ${
-                                                            done
-                                                                ? 'bg-primary text-white'
-                                                                : 'border-2 border-gray-300 dark:border-gray-600 text-transparent group-hover:border-primary'
-                                                        }`}
-                                                    >
-                                                        <span className="material-symbols-outlined text-[18px]">check</span>
+                                ) : (
+                                    <div className="flex flex-col gap-2 flex-1 overflow-y-auto no-scrollbar">
+                                        {habits.map((habit) => {
+                                            const done = logsByHabit.get(habit.id)?.has(today) ?? false;
+                                            return (
+                                                <button
+                                                    key={habit.id}
+                                                    onClick={() => handleToggleToday(habit)}
+                                                    className={`group flex items-center justify-between p-3 rounded-lg border transition-colors cursor-pointer text-left w-full shrink-0 ${
+                                                        done
+                                                            ? 'bg-primary/10 border-primary/20 dark:border-primary/30'
+                                                            : 'bg-gray-50 dark:bg-surface-dark-alt/50 border-transparent hover:bg-gray-100 dark:hover:bg-surface-dark-alt'
+                                                    }`}
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <div
+                                                            className={`size-5 rounded flex items-center justify-center transition-all flex-shrink-0 ${
+                                                                done
+                                                                    ? 'bg-primary text-white'
+                                                                    : 'border-2 border-gray-300 dark:border-gray-600 text-transparent group-hover:border-primary'
+                                                            }`}
+                                                        >
+                                                            <span className="material-symbols-outlined text-[16px]">check</span>
+                                                        </div>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className={`material-symbols-outlined text-[16px] ${HABIT_TYPE_COLORS[habit.type]}`}>
+                                                                {HABIT_TYPE_ICONS[habit.type]}
+                                                            </span>
+                                                            <span className={`text-sm font-medium ${done ? 'line-through text-gray-400 dark:text-gray-500' : 'text-gray-900 dark:text-gray-100'}`}>
+                                                                {habit.habitName}
+                                                            </span>
+                                                        </div>
                                                     </div>
                                                     <div className="flex items-center gap-2">
-                                                        <span className={`material-symbols-outlined text-[18px] ${HABIT_TYPE_COLORS[habit.type]}`}>
-                                                            {HABIT_TYPE_ICONS[habit.type]}
+                                                        <span className={`text-xs font-bold ${done ? 'text-primary' : 'text-gray-400 dark:text-gray-500'}`}>
+                                                            {done ? '✓' : ''}
                                                         </span>
-                                                        <span className={`text-sm font-medium ${done ? 'line-through text-gray-400 dark:text-gray-500' : 'text-gray-900 dark:text-gray-100'}`}>
-                                                            {habit.habitName}
-                                                        </span>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setEditingHabit(habit);
+                                                            }}
+                                                            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        >
+                                                            <span className="material-symbols-outlined text-[16px]">more_vert</span>
+                                                        </button>
                                                     </div>
-                                                </div>
-                                                <div className="flex items-center gap-3">
-                                                    <span className={`text-xs font-bold ${done ? 'text-primary' : 'text-gray-400 dark:text-gray-500'}`}>
-                                                        {done ? 'Done ✓' : 'Todo'}
-                                                    </span>
-                                                    <button
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setEditingHabit(habit);
-                                                        }}
-                                                        className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                    >
-                                                        <span className="material-symbols-outlined text-[16px]">more_vert</span>
-                                                    </button>
-                                                </div>
-                                            </button>
-                                        );
-                                    })}
-                                    <button
-                                        onClick={() => setShowCreateModal(true)}
-                                        className="mt-2 w-full py-3 border-2 border-dashed border-gray-200 dark:border-border-dark rounded-lg text-gray-500 dark:text-gray-400 text-sm font-medium hover:border-primary/40 hover:text-primary hover:bg-primary/5 transition-all"
-                                    >
-                                        + Add New Habit
-                                    </button>
-                                </div>
-                            )}
-                        </section>
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                )}
 
-                        <div className="lg:col-span-5 flex flex-col gap-6">
+                                <button
+                                    onClick={() => setShowCreateModal(true)}
+                                    className="mt-3 w-full py-2.5 border-2 border-dashed border-gray-200 dark:border-border-dark rounded-lg text-gray-500 dark:text-gray-400 text-sm font-medium hover:border-primary/40 hover:text-primary hover:bg-primary/5 transition-all shrink-0"
+                                >
+                                    + Add New Habit
+                                </button>
+                            </section>
+
                             <div className="bg-primary p-6 rounded-xl text-white shadow-lg shadow-primary/20 relative overflow-hidden">
                                 <div className="relative z-10 flex flex-col gap-1">
                                     <span className="text-xs font-bold uppercase tracking-widest opacity-80">
@@ -340,33 +286,51 @@ export function Habits() {
                                     local_fire_department
                                 </span>
                             </div>
+                        </div>
 
-                            <div className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-border-dark rounded-xl p-6 shadow-sm flex flex-col flex-1">
-                                <h3 className="text-base font-bold text-gray-900 dark:text-white mb-6">
-                                    Productivity Flow
-                                </h3>
-                                <div className="flex-1 flex items-end gap-1.5 px-2 min-h-[120px]">
-                                    {weekFlow.map((day, i) => (
-                                        <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                                            <div
-                                                className={`w-full rounded-t transition-all duration-500 ${
-                                                    day.count > 0 ? 'bg-primary' : 'bg-gray-100 dark:bg-surface-dark-alt'
-                                                }`}
-                                                style={{
-                                                    height: `${Math.max(8, (day.count / maxFlow) * 100)}%`,
-                                                    opacity: day.count > 0 ? 0.3 + (day.count / maxFlow) * 0.7 : 0.3,
-                                                }}
-                                                title={`${day.count} completion${day.count !== 1 ? 's' : ''}`}
-                                            />
+                        
+                        <div className="lg:col-span-7 flex flex-col gap-6">
+                            <section className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-border-dark rounded-xl p-6 shadow-sm">
+                                <div className="flex items-center justify-between mb-6">
+                                    <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                        <span className="material-symbols-outlined text-primary">calendar_view_month</span>
+                                        Habit Heatmap (Last 30 Days)
+                                    </h3>
+                                    <div className="flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
+                                        <div className="flex items-center gap-1.5">
+                                            <div className="size-3 bg-gray-200 dark:bg-gray-700 rounded-sm" /> Empty
                                         </div>
-                                    ))}
+                                        <div className="flex items-center gap-1.5">
+                                            <div className="size-3 bg-primary rounded-sm" /> Completed
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="flex justify-between mt-3 text-[10px] text-gray-500 dark:text-gray-400 font-bold uppercase tracking-tighter px-2">
-                                    {weekFlow.map((day, i) => (
-                                        <span key={i}>{day.label}</span>
-                                    ))}
-                                </div>
-                            </div>
+
+                                {habits.length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center py-12 text-gray-400 dark:text-gray-500">
+                                        <span className="material-symbols-outlined text-[40px] mb-2">check_circle</span>
+                                        <p className="text-sm">Create your first habit to see your heatmap</p>
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col gap-8">
+                                        {habits.map((habit) => {
+                                            const habitDates = logsByHabit.get(habit.id) ?? new Set<string>();
+                                            const completedDays = habitDates.size;
+                                            const pct = Math.round((completedDays / 30) * 100);
+                                            return (
+                                                <HabitHeatmapRow
+                                                    key={habit.id}
+                                                    habit={habit}
+                                                    logDates={habitDates}
+                                                    completedDays={completedDays}
+                                                    pct={pct}
+                                                    today={today}
+                                                />
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </section>
                         </div>
                     </div>
 
@@ -422,12 +386,37 @@ interface HabitHeatmapRowProps {
 
 function HabitHeatmapRow({ habit, logDates, completedDays, pct, today }: HabitHeatmapRowProps) {
     const days: { date: string; completed: boolean; isToday: boolean }[] = [];
-    for (let i = 29; i >= 0; i--) {
+    for (let i = 0; i <= 29; i++) {
         const d = new Date();
         d.setDate(d.getDate() - i);
         const ds = d.toISOString().slice(0, 10);
         days.push({ date: ds, completed: logDates.has(ds), isToday: ds === today });
     }
+
+    const scrollRef = useRef<HTMLDivElement>(null);
+    const isDragging = useRef(false);
+    const startX = useRef(0);
+    const scrollLeft = useRef(0);
+
+    const onMouseDown = (e: React.MouseEvent) => {
+        isDragging.current = true;
+        startX.current = e.pageX - (scrollRef.current?.offsetLeft ?? 0);
+        scrollLeft.current = scrollRef.current?.scrollLeft ?? 0;
+        if (scrollRef.current) scrollRef.current.style.cursor = 'grabbing';
+    };
+
+    const onMouseMove = (e: React.MouseEvent) => {
+        if (!isDragging.current || !scrollRef.current) return;
+        e.preventDefault();
+        const x = e.pageX - scrollRef.current.offsetLeft;
+        const walk = (x - startX.current) * 1.5;
+        scrollRef.current.scrollLeft = scrollLeft.current - walk;
+    };
+
+    const onMouseUp = () => {
+        isDragging.current = false;
+        if (scrollRef.current) scrollRef.current.style.cursor = 'grab';
+    };
 
     return (
         <div className="space-y-3">
@@ -445,17 +434,24 @@ function HabitHeatmapRow({ habit, logDates, completedDays, pct, today }: HabitHe
                     {completedDays}/30 days &bull; {pct}%
                 </span>
             </div>
-            <div className="overflow-x-auto pb-2 hide-scrollbar">
-                <div className="flex gap-1.5 min-w-max">
+            <div
+                ref={scrollRef}
+                className="overflow-x-auto pb-2 pt-1 pl-1 no-scrollbar cursor-grab select-none"
+                onMouseDown={onMouseDown}
+                onMouseMove={onMouseMove}
+                onMouseUp={onMouseUp}
+                onMouseLeave={onMouseUp}
+            >
+                <div className="flex gap-1 min-w-max pr-1">
                     {days.map((day) => (
                         <div
                             key={day.date}
                             title={`${day.date}${day.completed ? ' ✓' : ''}`}
-                            className={`size-6 rounded-sm transition-colors ${
+                            className={`w-[18px] h-[18px] rounded-sm transition-colors flex-shrink-0 ${
                                 day.completed ? 'bg-primary' : 'bg-gray-200 dark:bg-gray-700'
                             } ${
                                 day.isToday
-                                    ? 'ring-2 ring-primary/50 ring-offset-2 ring-offset-white dark:ring-offset-surface-dark'
+                                    ? 'ring-2 ring-primary/50 ring-offset-1 ring-offset-white dark:ring-offset-surface-dark'
                                     : ''
                             }`}
                         />

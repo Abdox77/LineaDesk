@@ -291,7 +291,6 @@ export function ProjectDetails() {
 
     const sortedTasks = [...(project.tasks ?? [])].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
 
-    /* Apply filters */
     const filteredTasks = sortedTasks.filter((t) => {
         if (t.parentTaskId) return false;
         if (searchQuery && !t.taskName.toLowerCase().includes(searchQuery.toLowerCase()) && !(t.description ?? '').toLowerCase().includes(searchQuery.toLowerCase())) return false;
@@ -364,7 +363,7 @@ export function ProjectDetails() {
                     </div>
                 </header>
 
-                <main className="flex-1 overflow-y-auto px-8 py-8">
+                <main className="flex-1 overflow-y-auto no-scrollbar px-8 py-8">
                     <div className="max-w-5xl mx-auto flex flex-col gap-8">
 
                         <section className="flex flex-col gap-4">
@@ -970,7 +969,7 @@ function GitHubPanel({ githubLink }: { githubLink: string }) {
                         </button>
                     </div>
 
-                    <div className="max-h-80 overflow-y-auto">
+                    <div className="max-h-80 overflow-y-auto no-scrollbar">
                         {loading ? (
                             <div className="flex items-center justify-center py-8">
                                 <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />

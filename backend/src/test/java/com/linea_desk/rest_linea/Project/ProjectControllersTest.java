@@ -81,7 +81,6 @@ class ProjectControllersTest {
         projectResponse.setTasks(Collections.emptyList());
     }
 
-    // ========== POST /api/project ==========
 
     @Test @WithMockUser
     void createNewProject_Success() throws Exception {
@@ -117,7 +116,6 @@ class ProjectControllersTest {
                 .andExpect(status().isInternalServerError());
     }
 
-    // ========== GET /api/project/{id} ==========
 
     @Test @WithMockUser
     void getProjectById_Success() throws Exception {
@@ -144,7 +142,6 @@ class ProjectControllersTest {
                 .andExpect(status().isInternalServerError());
     }
 
-    // ========== GET /api/projects ==========
 
     @Test @WithMockUser
     void getProjectsList_Success() throws Exception {
@@ -165,7 +162,6 @@ class ProjectControllersTest {
                 .andExpect(status().isInternalServerError());
     }
 
-    // ========== PUT /api/project/{id} ==========
 
     @Test @WithMockUser
     void updateProject_Success() throws Exception {
@@ -202,7 +198,6 @@ class ProjectControllersTest {
                 .andExpect(status().isInternalServerError());
     }
 
-    // ========== DELETE /api/project/{id} ==========
 
     @Test @WithMockUser
     void deleteProject_Success() throws Exception {
@@ -227,7 +222,6 @@ class ProjectControllersTest {
                 .andExpect(status().isInternalServerError());
     }
 
-    // ========== Auth test ==========
 
     @Test
     void createNewProject_Unauthenticated_ReturnsUnauthorized() throws Exception {
