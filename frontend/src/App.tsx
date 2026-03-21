@@ -16,6 +16,7 @@ import { FocusSession } from './pages/FocusSession';
 import { Habits } from './pages/Habits';
 import { Journal } from './pages/Journal';
 import { JoinProject } from './pages/JoinProject';
+import { Settings } from './pages/Settings';
 
 function App() {
     return (
@@ -73,6 +74,14 @@ function App() {
                                 element={
                                     <RequireAuth>
                                         <Journal />
+                                    </RequireAuth>
+                                }
+                            />
+                            <Route
+                                path='/settings'
+                                element={
+                                    <RequireAuth>
+                                        <Settings />
                                     </RequireAuth>
                                 }
                             />

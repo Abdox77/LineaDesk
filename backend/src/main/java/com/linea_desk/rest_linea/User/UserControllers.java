@@ -1,19 +1,26 @@
 package com.linea_desk.rest_linea.User;
 
-import com.linea_desk.rest_linea.common.service.JwtService;
-import com.linea_desk.rest_linea.common.service.AuthenticationService;
-import com.linea_desk.rest_linea.common.dto.ApiResponse;
-import com.linea_desk.rest_linea.common.dto.RegisterUserDto;
-import com.linea_desk.rest_linea.common.dto.LoginUserDto;
-import com.linea_desk.rest_linea.common.dto.LoginResponse;
-import org.apache.logging.log4j.Logger;
+import java.util.Optional;
+
 import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-import java.util.Optional;
+
+import com.linea_desk.rest_linea.common.dto.ApiResponse;
+import com.linea_desk.rest_linea.common.dto.LoginResponse;
+import com.linea_desk.rest_linea.common.dto.LoginUserDto;
+import com.linea_desk.rest_linea.common.dto.RegisterUserDto;
+import com.linea_desk.rest_linea.common.exceptions.DuplicateResourceException;
+import com.linea_desk.rest_linea.common.service.AuthenticationService;
+import com.linea_desk.rest_linea.common.service.JwtService;
+
+import jakarta.validation.Valid;
 
 
 @RestController
@@ -105,6 +112,41 @@ public class UserControllers {
                     "Internal Server Error"
             );
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
+    }
+
+    @PutMapping(path="/api/user/profile")
+    public ResponseEntity<ApiResponse<?>> updateProfile(
+            @AuthenticationPrincipal User currentUser,
+            @Valid @RequestBody UpdateProfileDto dto
+    ) {
+        try {
+            User updated = userService.updateProfile(currentUser, dto);
+            String newToken = jwtService.generateToken(updated);
+            LoginResponse loginResponse = new LoginResponse(
+                    newToken,
+                    updated.getUserId(),
+                    updated.getUsername(),
+                    updated.getDisplayName()
+            );
+            return ResponseEntity.ok(new ApiResponse<>(true, "Profile updated", loginResponse));
+        } catch (DuplicateResourceException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(new ApiResponse<>(false, e.getMessage()));
+        }
+    }
+
+    @PutMapping(path="/api/user/password")
+    public ResponseEntity<ApiResponse<?>> changePassword(
+            @AuthenticationPrincipal User currentUser,
+            @Valid @RequestBody ChangePasswordDto dto
+    ) {
+        try {
+            userService.changePassword(currentUser, dto);
+            return ResponseEntity.ok(new ApiResponse<>(true, "Password changed"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ApiResponse<>(false, e.getMessage()));
         }
     }
 

@@ -150,7 +150,7 @@ export function ProjectDetails() {
         await updateTask(taskId, data);
         if (data.state === 'FINISHED' && oldTask?.state !== 'FINISHED') {
             logActivity('task_completed');
-            showToast('Task completed! 🎉');
+            showToast('Task completed! ');
         } else {
             logActivity('task_updated');
             showToast('Task updated');
@@ -364,7 +364,7 @@ export function ProjectDetails() {
                 </header>
 
                 <main className="flex-1 overflow-y-auto no-scrollbar px-8 py-8">
-                    <div className="max-w-5xl mx-auto flex flex-col gap-8">
+                    <div className="max-w-7xl mx-auto flex flex-col gap-6">
 
                         <section className="flex flex-col gap-4">
                             <div className="flex items-start justify-between gap-6">
@@ -467,166 +467,184 @@ export function ProjectDetails() {
                             </div>
                         </section>
 
-                        <section className="flex flex-col gap-3">
-                            <div className="flex items-center justify-between">
-                                <h2 className="text-lg font-semibold">Task Queue</h2>
-                                <button
-                                    onClick={openNewTask}
-                                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-dark transition-colors shadow-lg shadow-primary/20"
-                                >
-                                    <span className="material-symbols-outlined text-[18px]">add</span>
-                                    Add Task
-                                </button>
-                            </div>
+                        <div className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-6 items-start">
 
-                            <div className="flex flex-wrap items-center gap-2">
-                                <div className="relative flex-1 min-w-[200px] max-w-sm">
-                                    <span className="material-symbols-outlined text-[18px] text-gray-400 dark:text-gray-500 absolute left-3 top-1/2 -translate-y-1/2">search</span>
-                                    <input
-                                        type="text"
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                        placeholder="Search tasks..."
-                                        className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-200 dark:border-border-dark bg-white dark:bg-surface-dark text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none focus:border-primary"
-                                    />
-                                </div>
-                                <div className="flex items-center gap-1">
-                                    {(['ALL', 'PENDING', 'IN_PROGRESS', 'FINISHED'] as const).map((s) => (
-                                        <button
-                                            key={s}
-                                            onClick={() => setFilterState(s)}
-                                            className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                                                filterState === s
-                                                    ? 'bg-primary/10 text-primary'
-                                                    : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-surface-dark-alt'
-                                            }`}
-                                        >
-                                            {s === 'ALL' ? 'All' : s === 'IN_PROGRESS' ? 'Active' : s === 'PENDING' ? 'Todo' : 'Done'}
-                                        </button>
-                                    ))}
-                                </div>
-                                <select
-                                    value={filterImportance}
-                                    onChange={(e) => setFilterImportance(e.target.value as TaskImportance | 'ALL')}
-                                    className="px-2.5 py-1.5 rounded-lg text-xs font-bold border border-gray-200 dark:border-border-dark bg-white dark:bg-surface-dark text-gray-500 dark:text-gray-400 outline-none focus:border-primary"
-                                >
-                                    <option value="ALL">All Priority</option>
-                                    <option value="NORMAL">Normal</option>
-                                    <option value="MEDIUM">Medium</option>
-                                    <option value="IMPORTANT">Important</option>
-                                    <option value="CRUCIAL">Crucial</option>
-                                </select>
-                            </div>
+                            {/* ── Primary column: tasks ── */}
+                            <div className="flex flex-col gap-6 min-w-0">
 
-                            {selectedTasks.size > 0 && (
-                                <div className="flex items-center gap-3 px-4 py-2.5 rounded-lg bg-primary/10 border border-primary/20">
-                                    <span className="text-sm font-medium text-primary">
-                                        {selectedTasks.size} selected
-                                    </span>
-                                    <div className="flex items-center gap-2 ml-auto">
+                                <section className="flex flex-col gap-3">
+                                    <div className="flex items-center justify-between">
+                                        <h2 className="text-lg font-semibold">Task Queue</h2>
                                         <button
-                                            onClick={() => handleBulkStateChange('IN_PROGRESS')}
-                                            className="px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-colors"
+                                            onClick={openNewTask}
+                                            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-dark transition-colors shadow-lg shadow-primary/20"
                                         >
-                                            Start
-                                        </button>
-                                        <button
-                                            onClick={() => handleBulkStateChange('FINISHED')}
-                                            className="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 transition-colors"
-                                        >
-                                            Complete
-                                        </button>
-                                        <button
-                                            onClick={handleBulkDelete}
-                                            className="px-3 py-1.5 rounded-lg text-xs font-bold bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors"
-                                        >
-                                            Delete
+                                            <span className="material-symbols-outlined text-[18px]">add</span>
+                                            Add Task
                                         </button>
                                     </div>
-                                </div>
-                            )}
 
-                            <div className="rounded-xl border border-gray-200 dark:border-border-dark bg-white dark:bg-surface-dark">
-                                <div className="grid grid-cols-[40px_1fr_110px_90px_80px_90px_48px] items-center px-4 py-3 border-b border-gray-200 dark:border-border-dark text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    <div className="flex items-center justify-center">
-                                        <input
-                                            type="checkbox"
-                                            checked={filteredTasks.length > 0 && selectedTasks.size === filteredTasks.length}
-                                            onChange={toggleAll}
-                                            className="task-checkbox w-4 h-4 rounded border-border-dark cursor-pointer"
-                                        />
-                                    </div>
-                                    <div>Task</div>
-                                    <div>Status</div>
-                                    <div>Assignee</div>
-                                    <div>Due</div>
-                                    <div>Duration</div>
-                                    <div />
-                                </div>
-
-                                {loading ? (
-                                    <>
-                                        <SkeletonRow />
-                                        <SkeletonRow />
-                                        <SkeletonRow />
-                                    </>
-                                ) : filteredTasks.length === 0 ? (
-                                    <EmptyState
-                                        icon="task_alt"
-                                        title={searchQuery || filterState !== 'ALL' || filterImportance !== 'ALL' ? 'No tasks match your filters' : 'No tasks yet'}
-                                        description={searchQuery || filterState !== 'ALL' || filterImportance !== 'ALL' ? 'Try adjusting your search or filters' : 'Create your first task to get started'}
-                                        actionLabel={!searchQuery && filterState === 'ALL' && filterImportance === 'ALL' ? 'Create Task' : undefined}
-                                        onAction={!searchQuery && filterState === 'ALL' && filterImportance === 'ALL' ? openNewTask : undefined}
-                                    />
-                                ) : (
-                                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                                        <SortableContext items={filteredTasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
-                                            {filteredTasks.map((task) => (
-                                                <SortableTaskRow
-                                                    key={task.id}
-                                                    task={task}
-                                                    selected={selectedTasks.has(task.id)}
-                                                    menuOpen={menuOpenId === task.id}
-                                                    onToggleSelect={() => toggleTask(task.id)}
-                                                    onToggleMenu={() => setMenuOpenId(menuOpenId === task.id ? null : task.id)}
-                                                    onCloseMenu={() => setMenuOpenId(null)}
-                                                    onEdit={() => openEditTask(task)}
-                                                    onDelete={() => handleDeleteTask(task.id)}
-                                                    onStateChange={(s) => handleUpdateTask(task.id, { ...task, state: s })}
-                                                />
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <div className="relative flex-1 min-w-[200px] max-w-sm">
+                                            <span className="material-symbols-outlined text-[18px] text-gray-400 dark:text-gray-500 absolute left-3 top-1/2 -translate-y-1/2">search</span>
+                                            <input
+                                                type="text"
+                                                value={searchQuery}
+                                                onChange={(e) => setSearchQuery(e.target.value)}
+                                                placeholder="Search tasks..."
+                                                className="w-full pl-9 pr-3 py-2 rounded-lg border border-gray-200 dark:border-border-dark bg-white dark:bg-surface-dark text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none focus:border-primary"
+                                            />
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            {(['ALL', 'PENDING', 'IN_PROGRESS', 'FINISHED'] as const).map((s) => (
+                                                <button
+                                                    key={s}
+                                                    onClick={() => setFilterState(s)}
+                                                    className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                                        filterState === s
+                                                            ? 'bg-primary/10 text-primary'
+                                                            : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-surface-dark-alt'
+                                                    }`}
+                                                >
+                                                    {s === 'ALL' ? 'All' : s === 'IN_PROGRESS' ? 'Active' : s === 'PENDING' ? 'Todo' : 'Done'}
+                                                </button>
                                             ))}
-                                        </SortableContext>
-                                    </DndContext>
+                                        </div>
+                                        <select
+                                            value={filterImportance}
+                                            onChange={(e) => setFilterImportance(e.target.value as TaskImportance | 'ALL')}
+                                            className="px-2.5 py-1.5 rounded-lg text-xs font-bold border border-gray-200 dark:border-border-dark bg-white dark:bg-surface-dark text-gray-500 dark:text-gray-400 outline-none focus:border-primary"
+                                        >
+                                            <option value="ALL">All Priority</option>
+                                            <option value="NORMAL">Normal</option>
+                                            <option value="MEDIUM">Medium</option>
+                                            <option value="IMPORTANT">Important</option>
+                                            <option value="CRUCIAL">Crucial</option>
+                                        </select>
+                                    </div>
+
+                                    {selectedTasks.size > 0 && (
+                                        <div className="flex items-center gap-3 px-4 py-2.5 rounded-lg bg-primary/10 border border-primary/20">
+                                            <span className="text-sm font-medium text-primary">
+                                                {selectedTasks.size} selected
+                                            </span>
+                                            <div className="flex items-center gap-2 ml-auto">
+                                                <button
+                                                    onClick={() => handleBulkStateChange('IN_PROGRESS')}
+                                                    className="px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-500/10 text-blue-500 hover:bg-blue-500/20 transition-colors"
+                                                >
+                                                    Start
+                                                </button>
+                                                <button
+                                                    onClick={() => handleBulkStateChange('FINISHED')}
+                                                    className="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20 transition-colors"
+                                                >
+                                                    Complete
+                                                </button>
+                                                <button
+                                                    onClick={handleBulkDelete}
+                                                    className="px-3 py-1.5 rounded-lg text-xs font-bold bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors"
+                                                >
+                                                    Delete
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="rounded-xl border border-gray-200 dark:border-border-dark bg-white dark:bg-surface-dark">
+                                        <div className="grid grid-cols-[40px_1fr_110px_90px_80px_90px_48px] items-center px-4 py-3 border-b border-gray-200 dark:border-border-dark text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                            <div className="flex items-center justify-center">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={filteredTasks.length > 0 && selectedTasks.size === filteredTasks.length}
+                                                    onChange={toggleAll}
+                                                    className="task-checkbox w-4 h-4 rounded border-border-dark cursor-pointer"
+                                                />
+                                            </div>
+                                            <div>Task</div>
+                                            <div>Status</div>
+                                            <div>Assignee</div>
+                                            <div>Due</div>
+                                            <div>Duration</div>
+                                            <div />
+                                        </div>
+
+                                        {loading ? (
+                                            <>
+                                                <SkeletonRow />
+                                                <SkeletonRow />
+                                                <SkeletonRow />
+                                            </>
+                                        ) : filteredTasks.length === 0 ? (
+                                            <EmptyState
+                                                icon="task_alt"
+                                                title={searchQuery || filterState !== 'ALL' || filterImportance !== 'ALL' ? 'No tasks match your filters' : 'No tasks yet'}
+                                                description={searchQuery || filterState !== 'ALL' || filterImportance !== 'ALL' ? 'Try adjusting your search or filters' : 'Create your first task to get started'}
+                                                actionLabel={!searchQuery && filterState === 'ALL' && filterImportance === 'ALL' ? 'Create Task' : undefined}
+                                                onAction={!searchQuery && filterState === 'ALL' && filterImportance === 'ALL' ? openNewTask : undefined}
+                                            />
+                                        ) : (
+                                            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                                                <SortableContext items={filteredTasks.map(t => t.id)} strategy={verticalListSortingStrategy}>
+                                                    {filteredTasks.map((task) => (
+                                                        <SortableTaskRow
+                                                            key={task.id}
+                                                            task={task}
+                                                            selected={selectedTasks.has(task.id)}
+                                                            menuOpen={menuOpenId === task.id}
+                                                            onToggleSelect={() => toggleTask(task.id)}
+                                                            onToggleMenu={() => setMenuOpenId(menuOpenId === task.id ? null : task.id)}
+                                                            onCloseMenu={() => setMenuOpenId(null)}
+                                                            onEdit={() => openEditTask(task)}
+                                                            onDelete={() => handleDeleteTask(task.id)}
+                                                            onStateChange={(s) => handleUpdateTask(task.id, { ...task, state: s })}
+                                                        />
+                                                    ))}
+                                                </SortableContext>
+                                            </DndContext>
+                                        )}
+
+                                        <div className="grid grid-cols-[40px_1fr_110px_90px_80px_90px_48px] items-center px-4 py-3 border-t border-gray-200 dark:border-border-dark">
+                                            <div className="flex items-center justify-center">
+                                                <span className="material-symbols-outlined text-[18px] text-gray-300 dark:text-gray-600">add</span>
+                                            </div>
+                                            <input
+                                                type="text"
+                                                value={newTaskName}
+                                                onChange={(e) => setNewTaskName(e.target.value)}
+                                                onKeyDown={(e) => e.key === 'Enter' && handleQuickCreateTask()}
+                                                placeholder="Quick add a task..."
+                                                className="bg-transparent text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none"
+                                            />
+                                            <div />
+                                            <div />
+                                            <div />
+                                            <div className="flex items-center justify-center">
+                                                {newTaskName.trim().length >= 3 && (
+                                                    <button
+                                                        onClick={handleQuickCreateTask}
+                                                        className="text-primary hover:text-primary-dark transition-colors"
+                                                    >
+                                                        <span className="material-symbols-outlined text-[20px]">send</span>
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </section>
+
+                            </div>
+
+                            {/* ── Sidebar column: GitHub Activity ── */}
+                            <div className="flex flex-col gap-4 xl:sticky xl:top-0">
+
+                                {project.githubLink && (
+                                    <GitHubPanel githubLink={project.githubLink} />
                                 )}
 
-                                <div className="grid grid-cols-[40px_1fr_110px_90px_80px_90px_48px] items-center px-4 py-3 border-t border-gray-200 dark:border-border-dark">
-                                    <div className="flex items-center justify-center">
-                                        <span className="material-symbols-outlined text-[18px] text-gray-300 dark:text-gray-600">add</span>
-                                    </div>
-                                    <input
-                                        type="text"
-                                        value={newTaskName}
-                                        onChange={(e) => setNewTaskName(e.target.value)}
-                                        onKeyDown={(e) => e.key === 'Enter' && handleQuickCreateTask()}
-                                        placeholder="Quick add a task..."
-                                        className="bg-transparent text-sm text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none"
-                                    />
-                                    <div />
-                                    <div />
-                                    <div />
-                                    <div className="flex items-center justify-center">
-                                        {newTaskName.trim().length >= 3 && (
-                                            <button
-                                                onClick={handleQuickCreateTask}
-                                                className="text-primary hover:text-primary-dark transition-colors"
-                                            >
-                                                <span className="material-symbols-outlined text-[20px]">send</span>
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
                             </div>
-                        </section>
+
+                        </div>
 
                         <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                             <StatCard
@@ -658,9 +676,6 @@ export function ProjectDetails() {
                             />
                         </section>
 
-                        {project.githubLink && (
-                            <GitHubPanel githubLink={project.githubLink} />
-                        )}
                     </div>
                 </main>
             </div>
@@ -910,7 +925,7 @@ function GitHubPanel({ githubLink }: { githubLink: string }) {
     const [commits, setCommits] = React.useState<GitHubCommitDto[]>([]);
     const [prs, setPrs] = React.useState<GitHubPullRequestDto[]>([]);
     const [loading, setLoading] = React.useState(true);
-    const [expanded, setExpanded] = React.useState(false);
+    const [expanded, setExpanded] = React.useState(true);
 
     React.useEffect(() => {
         if (!parsed) { setLoading(false); return; }

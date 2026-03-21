@@ -1,4 +1,15 @@
-const STORAGE_KEY = 'devhub_activity_log';
+const STORAGE_KEY_PREFIX = 'devhub_activity_log';
+
+function getStorageKey(): string {
+    try {
+        const raw = localStorage.getItem('user');
+        if (raw) {
+            const user = JSON.parse(raw);
+            if (user.id) return `${STORAGE_KEY_PREFIX}_${user.id}`;
+        }
+    } catch {}
+    return STORAGE_KEY_PREFIX;
+}
 
 export type ActivityType =
     | 'task_created'
@@ -17,7 +28,7 @@ interface ActivityEntry {
 
 function getLog(): ActivityEntry[] {
     try {
-        const raw = localStorage.getItem(STORAGE_KEY);
+        const raw = localStorage.getItem(getStorageKey());
         return raw ? JSON.parse(raw) : [];
     } catch {
         return [];
@@ -25,7 +36,7 @@ function getLog(): ActivityEntry[] {
 }
 
 function saveLog(log: ActivityEntry[]): void {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(log));
+    localStorage.setItem(getStorageKey(), JSON.stringify(log));
 }
 
 export function logActivity(type: ActivityType): void {

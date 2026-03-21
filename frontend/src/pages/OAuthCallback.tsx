@@ -1,10 +1,9 @@
 import React, { useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 
 export function OAuthCallback() {
     const [searchParams] = useSearchParams();
-    const navigate = useNavigate();
     const { login } = useAuth();
 
     useEffect(() => {
@@ -13,16 +12,16 @@ export function OAuthCallback() {
 
         if (token) {
             login(token, {
-                id: 0,
-                email: '',
+                id: Number(searchParams.get('id') ?? 0),
+                email: searchParams.get('email') ?? '',
                 jwtToken: token,
                 username: searchParams.get('username') ?? 'Developer',
             });
-            navigate('/dashboard', { replace: true });
+            window.location.replace('/dashboard');
         } else {
-            navigate(`/login?error=${error ?? 'oauth_failed'}`, { replace: true });
+            window.location.replace(`/login?error=${error ?? 'oauth_failed'}`);
         }
-    }, [searchParams, navigate, login]);
+    }, [searchParams, login]);
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark">
