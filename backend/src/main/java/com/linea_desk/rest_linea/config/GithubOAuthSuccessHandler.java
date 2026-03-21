@@ -1,6 +1,8 @@
 package com.linea_desk.rest_linea.config;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.UUID;
 
@@ -74,7 +76,10 @@ public class GithubOAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHan
         });
 
         String jwt = jwtService.generateToken(user);
-        String redirectUrl = frontendBaseUrl + "/oauth/callback?token=" + jwt;
+        String redirectUrl = frontendBaseUrl + "/oauth/callback?token=" + jwt
+                + "&id=" + user.getUserId()
+                + "&email=" + URLEncoder.encode(user.getEmail(), StandardCharsets.UTF_8)
+                + "&username=" + URLEncoder.encode(user.getDisplayName(), StandardCharsets.UTF_8);
         log.info("GitHub OAuth successful for {}. Redirecting to frontend.", finalEmail);
         getRedirectStrategy().sendRedirect(request, response, redirectUrl);
     }

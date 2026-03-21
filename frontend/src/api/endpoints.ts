@@ -18,6 +18,9 @@ import type {
     JournalRequestDto,
     PageResponseDto,
     PageRequestDto,
+    LoginResponse,
+    UpdateProfileDto,
+    ChangePasswordDto,
 } from './types';
 
 export async function fetchProjects(): Promise<ProjectResponseDto[]> {
@@ -214,3 +217,11 @@ export async function deletePage(id: number): Promise<void> {
     await api.delete(`/api/page/${id}`);
 }
 
+export async function updateProfile(dto: UpdateProfileDto): Promise<LoginResponse> {
+    const { data } = await api.put<ApiResponse<LoginResponse>>('/api/user/profile', dto);
+    return data.data;
+}
+
+export async function changePassword(dto: ChangePasswordDto): Promise<void> {
+    await api.put('/api/user/password', dto);
+}

@@ -7,6 +7,7 @@ interface AuthCtx {
     isAuthenticated: boolean;
     login: (token: string, user: LoginResponse) => void;
     logout: () => void;
+    updateUser: (user: LoginResponse) => void;
 }
 
 const AuthContext = createContext<AuthCtx>({
@@ -15,6 +16,7 @@ const AuthContext = createContext<AuthCtx>({
     isAuthenticated: false,
     login: () => {},
     logout: () => {},
+    updateUser: () => {},
 });
 
 function getTokenExpiration(jwt: string): number | null {
@@ -115,9 +117,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(userData);
     };
 
+    const updateUser = (userData: LoginResponse) => {
+        setToken(userData.jwtToken);
+        setUser(userData);
+    };
+
 
     return (
-        <AuthContext.Provider value={{ user, token, isAuthenticated: !!token, login, logout }}>
+        <AuthContext.Provider value={{ user, token, isAuthenticated: !!token, login, logout, updateUser }}>
             {children}
         </AuthContext.Provider>
     );

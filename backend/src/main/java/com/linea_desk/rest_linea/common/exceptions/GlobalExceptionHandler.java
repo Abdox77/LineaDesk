@@ -3,6 +3,8 @@ package com.linea_desk.rest_linea.common.exceptions;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -14,9 +16,6 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import com.linea_desk.rest_linea.common.dto.ExceptionResponse;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -25,19 +24,25 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ExceptionResponse<Void>> handleResourceNotFound(ResourceNotFoundException ex) {
         ExceptionResponse<Void> response = new ExceptionResponse<>(ex.getMessage());
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(response);
     }
 
     @ExceptionHandler(DuplicateResourceException.class)
     public ResponseEntity<ExceptionResponse<Void>> handleDuplicateResource(DuplicateResourceException ex) {
         ExceptionResponse<Void> response = new ExceptionResponse<>(ex.getMessage());
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(response);
     }
 
     @ExceptionHandler(UnauthorizedAccessException.class)
     public ResponseEntity<ExceptionResponse<Void>> handleUnauthorizedAccess(UnauthorizedAccessException ex) {
         ExceptionResponse<Void> response = new ExceptionResponse<>(ex.getMessage());
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(response);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -47,7 +52,9 @@ public class GlobalExceptionHandler {
             fieldErrors.put(error.getField(), error.getDefaultMessage())
         );
         ExceptionResponse<Map<String, String>> response = new ExceptionResponse<>("Validation failed", fieldErrors);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(response);
     }
 
     @ExceptionHandler(NoResourceFoundException.class)

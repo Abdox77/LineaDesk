@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
+import Markdown from 'react-markdown';
 import { Sidebar } from '../components/Sidebar';
 import { useAuth } from '../auth/AuthContext';
 import { useToast } from '../components/ToastProvider';
@@ -44,10 +45,52 @@ export function Journal() {
     const [content, setContent] = useState('');
     const [saving, setSaving] = useState(false);
     const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
     const [search, setSearch] = useState('');
+    const [previewMode, setPreviewMode] = useState(false);
 
-    const [quickThought, setQuickThought] = useState('');
+    const handleExportMd = () => {
+        const filename = `${(title || 'Untitled').replace(/[^a-zA-Z0-9_\- ]/g, '').trim()}.md`;
+        const blob = new Blob([`# ${title}\n\n${content}`], { type: 'text/markdown;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast('Note exported as .md');
+    };
+
+    const applyFormat = (prefix: string, suffix: string, placeholder: string) => {
+        const ta = textareaRef.current;
+        if (!ta) return;
+        const start = ta.selectionStart;
+        const end = ta.selectionEnd;
+        const selected = content.slice(start, end);
+        const text = selected || placeholder;
+        const replacement = `${prefix}${text}${suffix}`;
+        const newContent = content.slice(0, start) + replacement + content.slice(end);
+        handleContentChange(newContent);
+        requestAnimationFrame(() => {
+            ta.focus();
+            const cursorStart = start + prefix.length;
+            ta.setSelectionRange(cursorStart, cursorStart + text.length);
+        });
+    };
+
+    const applyLinePrefix = (prefix: string) => {
+        const ta = textareaRef.current;
+        if (!ta) return;
+        const start = ta.selectionStart;
+        const lineStart = content.lastIndexOf('\n', start - 1) + 1;
+        const newContent = content.slice(0, lineStart) + prefix + content.slice(lineStart);
+        handleContentChange(newContent);
+        requestAnimationFrame(() => {
+            ta.focus();
+            ta.setSelectionRange(start + prefix.length, start + prefix.length);
+        });
+    };
 
     const loadJournals = useCallback(async () => {
         try {
@@ -168,25 +211,6 @@ export function Journal() {
         }
     };
 
-    const handleSaveQuickThought = async () => {
-        if (!quickThought.trim()) return;
-        try {
-            const journal = await ensureJournal();
-            await createPage({
-                title: 'Quick Thought',
-                content: quickThought.trim(),
-                journalId: journal.id,
-            });
-            setQuickThought('');
-            const fresh = await loadJournals();
-            const j = fresh.find((x) => x.id === journal.id);
-            if (j) setActiveJournal(j);
-            showToast('Thought saved ⚡');
-        } catch {
-            showToast('Failed to save thought', 'error');
-        }
-    };
-
     const allPages: PageResponseDto[] = activeJournal?.pages ?? [];
     const sortedPages = [...allPages].sort(
         (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
@@ -198,8 +222,6 @@ export function Journal() {
                   (p.content ?? '').toLowerCase().includes(search.toLowerCase())
           )
         : sortedPages;
-
-    const quickThoughts = sortedPages.filter((p) => p.title === 'Quick Thought');
 
     if (loading) {
         return (
@@ -310,13 +332,35 @@ export function Journal() {
                     </div>
                     <div className="flex items-center gap-3">
                         {activePage && (
-                            <button
-                                onClick={() => handleDeletePage(activePage.id)}
-                                className="p-2 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg text-gray-400 hover:text-red-500 transition-colors"
-                                title="Delete entry"
-                            >
-                                <span className="material-symbols-outlined text-[20px]">delete</span>
-                            </button>
+                            <>
+                                <button
+                                    onClick={() => setPreviewMode(v => !v)}
+                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                                        previewMode
+                                            ? 'bg-primary/10 text-primary'
+                                            : 'text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-surface-dark-alt'
+                                    }`}
+                                    title={previewMode ? 'Switch to edit' : 'Preview markdown'}
+                                >
+                                    <span className="material-symbols-outlined text-[18px]">{previewMode ? 'edit' : 'visibility'}</span>
+                                    {previewMode ? 'Edit' : 'Preview'}
+                                </button>
+                                <button
+                                    onClick={handleExportMd}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-surface-dark-alt transition-colors"
+                                    title="Export as .md"
+                                >
+                                    <span className="material-symbols-outlined text-[18px]">download</span>
+                                    Export
+                                </button>
+                                <button
+                                    onClick={() => handleDeletePage(activePage.id)}
+                                    className="p-2 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg text-gray-400 hover:text-red-500 transition-colors"
+                                    title="Delete entry"
+                                >
+                                    <span className="material-symbols-outlined text-[20px]">delete</span>
+                                </button>
+                            </>
                         )}
                     </div>
                 </header>
@@ -336,16 +380,24 @@ export function Journal() {
                                     onChange={(e) => handleTitleChange(e.target.value)}
                                     className="w-full bg-transparent border-none p-0 text-4xl md:text-5xl font-black tracking-tight focus:ring-0 placeholder:text-gray-300 dark:placeholder:text-gray-700 outline-none mb-6 text-gray-900 dark:text-white"
                                     placeholder="Entry title…"
+                                    readOnly={previewMode}
                                 />
 
+                                {previewMode ? (
+                                    <div className="prose prose-lg dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 min-h-[500px]">
+                                        <Markdown>{content}</Markdown>
+                                    </div>
+                                ) : (
                                 <div className="relative min-h-[500px]">
                                     <textarea
+                                        ref={textareaRef}
                                         value={content}
                                         onChange={(e) => handleContentChange(e.target.value)}
                                         className="w-full h-full min-h-[500px] bg-transparent border-none p-0 focus:ring-0 text-lg leading-relaxed text-gray-700 dark:text-gray-300 placeholder:text-gray-300 dark:placeholder:text-gray-700 resize-none font-medium outline-none"
                                         placeholder="Start writing your thoughts..."
                                     />
                                 </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -363,105 +415,29 @@ export function Journal() {
                 )}
 
                 
-                {activePage && (
+                {activePage && !previewMode && (
                     <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-white dark:bg-surface-dark border border-gray-200 dark:border-border-dark shadow-2xl rounded-full px-6 py-2 flex items-center gap-6 z-10">
-                        <button className="text-gray-400 hover:text-primary transition-colors">
+                        <button onClick={() => applyFormat('**', '**', 'bold text')} className="text-gray-400 hover:text-primary transition-colors" title="Bold">
                             <span className="material-symbols-outlined">format_bold</span>
                         </button>
-                        <button className="text-gray-400 hover:text-primary transition-colors">
+                        <button onClick={() => applyFormat('*', '*', 'italic text')} className="text-gray-400 hover:text-primary transition-colors" title="Italic">
                             <span className="material-symbols-outlined">format_italic</span>
                         </button>
-                        <button className="text-gray-400 hover:text-primary transition-colors">
+                        <button onClick={() => applyLinePrefix('- ')} className="text-gray-400 hover:text-primary transition-colors" title="Bullet list">
                             <span className="material-symbols-outlined">format_list_bulleted</span>
                         </button>
                         <div className="w-px h-6 bg-gray-200 dark:bg-border-dark" />
-                        <button className="text-gray-400 hover:text-primary transition-colors">
+                        <button onClick={() => applyFormat('[', '](url)', 'link text')} className="text-gray-400 hover:text-primary transition-colors" title="Link">
                             <span className="material-symbols-outlined">link</span>
                         </button>
-                        <button className="text-gray-400 hover:text-primary transition-colors">
+                        <button onClick={() => applyFormat('`', '`', 'code')} className="text-gray-400 hover:text-primary transition-colors" title="Code">
                             <span className="material-symbols-outlined">code</span>
                         </button>
                     </div>
                 )}
             </main>
 
-            
-            <aside className="w-72 flex-col border-l border-gray-200 dark:border-border-dark bg-gray-50/30 dark:bg-background-dark/30 shrink-0 hidden xl:flex">
-                <div className="p-6">
-                    <h2 className="text-sm font-bold flex items-center gap-2 text-gray-900 dark:text-white">
-                        <span className="material-symbols-outlined text-primary text-lg">bolt</span>
-                        Quick Thoughts
-                    </h2>
-                    <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-wider">
-                        Fleeting ideas to process later
-                    </p>
-                </div>
 
-                <div className="px-4 mb-4">
-                    <div className="bg-white dark:bg-surface-dark border border-gray-200 dark:border-border-dark rounded-xl p-3 focus-within:border-primary transition-all">
-                        <textarea
-                            value={quickThought}
-                            onChange={(e) => setQuickThought(e.target.value)}
-                            className="w-full bg-transparent border-none p-0 text-xs focus:ring-0 resize-none h-16 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 outline-none"
-                            placeholder="Capture a quick thought..."
-                        />
-                        <div className="flex justify-end items-center mt-2 pt-2 border-t border-gray-100 dark:border-border-dark">
-                            <button
-                                onClick={handleSaveQuickThought}
-                                disabled={!quickThought.trim()}
-                                className="text-[10px] font-bold bg-primary px-3 py-1 rounded-md text-white disabled:opacity-40 hover:bg-primary/90 transition-colors"
-                            >
-                                Save
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="flex-1 overflow-y-auto no-scrollbar px-4 space-y-4 pb-8">
-                    {quickThoughts.length === 0 && (
-                        <p className="text-xs text-gray-400 text-center mt-8">No quick thoughts yet</p>
-                    )}
-                    {quickThoughts.map((qt) => (
-                        <div
-                            key={qt.id}
-                            className="group relative bg-white dark:bg-surface-dark border border-gray-200 dark:border-border-dark rounded-xl p-4 hover:shadow-md transition-all"
-                        >
-                            <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed italic">
-                                "{excerpt(qt.content, 120)}"
-                            </p>
-                            <div className="flex items-center justify-between mt-3">
-                                <span className="text-[9px] text-gray-400">
-                                    {formatDate(qt.createdAt)}
-                                </span>
-                                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button
-                                        onClick={() => {
-                                            selectPage(qt);
-                                        }}
-                                        className="material-symbols-outlined text-[14px] text-gray-400 hover:text-primary"
-                                        title="Open"
-                                    >
-                                        open_in_new
-                                    </button>
-                                    <button
-                                        onClick={() => handleDeletePage(qt.id)}
-                                        className="material-symbols-outlined text-[14px] text-gray-400 hover:text-red-500"
-                                        title="Delete"
-                                    >
-                                        delete
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-
-                <div className="p-4 border-t border-gray-200 dark:border-border-dark flex items-center justify-between">
-                    <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">
-                        {quickThoughts.length} Quick thought{quickThoughts.length !== 1 ? 's' : ''}
-                    </span>
-                </div>
-            </aside>
         </div>
     );
 }

@@ -15,7 +15,7 @@ const navItems = [
 ];
 
 const settingsItems = [
-    { label: 'Settings', icon: 'settings', href: '/preferences' },
+    { label: 'Settings', icon: 'settings', href: '/settings' },
 ];
 
 export function Sidebar({ displayName = 'My Space' }: SidebarProps) {
