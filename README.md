@@ -1,4 +1,7 @@
-# LineaDesk
+## LineaDesk
+🔗 **Live:** https://lineadesk.codes
+
+[![Live Demo](https://img.shields.io/badge/Live-lineadesk.codes-blue)](https://lineadesk.codes)
 
 A full-stack **Developer Productivity & Project Management Dashboard** that combines project management, task tracking, focus sessions (Pomodoro timer), habit tracking, and journaling into a unified, dark-mode-first web application.
 
