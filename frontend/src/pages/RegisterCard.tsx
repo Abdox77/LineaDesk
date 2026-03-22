@@ -57,7 +57,7 @@ export function RegisterCard() {
                 <div className="w-full max-w-[440px]">
                     <div className="mb-8">
                         <h1 className="text-slate-900 dark:text-white tracking-tight text-[32px] font-extrabold leading-tight text-center pb-2 font-display">
-                            Join Developer Hub
+                            Join LineaDesk
                         </h1>
                         <p className="text-slate-500 dark:text-[#9cb0ba] text-base font-normal leading-normal text-center">
                             Start your productive journey today.

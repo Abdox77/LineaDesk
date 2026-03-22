@@ -65,12 +65,15 @@ public class GithubOAuthSuccessHandler extends SimpleUrlAuthenticationSuccessHan
 
         final String finalEmail = email;
         final String displayName = (name != null && !name.isBlank()) ? name : login;
+        // Sanitize username to match validation regex: only letters, numbers, underscores, hyphens
+        final String sanitizedUsername = displayName.replaceAll("[^a-zA-Z0-9_-]", "");
+        final String safeUsername = sanitizedUsername.length() >= 2 ? sanitizedUsername : login.replaceAll("[^a-zA-Z0-9_-]", "");
 
         User user = userRepository.findByEmail(finalEmail).orElseGet(() -> {
             log.info("Creating new user from GitHub OAuth: {}", finalEmail);
             User newUser = new User()
                     .setEmail(finalEmail)
-                    .setUsername(displayName)
+                    .setUsername(safeUsername)
                     .setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
             return userRepository.save(newUser);
         });

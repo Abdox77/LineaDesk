@@ -1,12 +1,12 @@
 import React from 'react';
 
-interface DevHubLogoProps {
+interface LineaDeskLogoProps {
     size?: 'sm' | 'md' | 'lg';
     showText?: boolean;
     className?: string;
 }
 
-export function DevHubLogo({ size = 'md', showText = true, className = '' }: DevHubLogoProps) {
+export function LineaDeskLogo({ size = 'md', showText = true, className = '' }: LineaDeskLogoProps) {
     const iconSizes = {
         sm: 'text-[20px]',
         md: 'text-[24px]',
@@ -34,7 +34,7 @@ export function DevHubLogo({ size = 'md', showText = true, className = '' }: Dev
             </div>
             {showText && (
                 <span className={`font-bold ${textSizes[size]} tracking-tight text-gray-900 dark:text-white`}>
-                    DevHub
+                    LineaDesk
                 </span>
             )}
         </div>

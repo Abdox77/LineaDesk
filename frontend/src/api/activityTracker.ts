@@ -1,4 +1,4 @@
-const STORAGE_KEY_PREFIX = 'devhub_activity_log';
+const STORAGE_KEY_PREFIX = 'lineadesk_activity_log';
 
 function getStorageKey(): string {
     try {

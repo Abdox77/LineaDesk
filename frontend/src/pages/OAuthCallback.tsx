@@ -1,12 +1,16 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 
 export function OAuthCallback() {
     const [searchParams] = useSearchParams();
     const { login } = useAuth();
+    const handled = useRef(false);
 
     useEffect(() => {
+        if (handled.current) return;
+        handled.current = true;
+
         const token = searchParams.get('token');
         const error = searchParams.get('error');
 
