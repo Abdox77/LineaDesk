@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { DevHubLogo } from './DevHubLogo';
+import { LineaDeskLogo } from './LineaDeskLogo';
 import { useTheme } from './ThemeProvider';
 
 interface SidebarProps {
@@ -34,8 +34,8 @@ export function Sidebar({ displayName = 'My Space' }: SidebarProps) {
         <aside className="w-20 lg:w-64 flex-shrink-0 flex flex-col bg-surface-light dark:bg-surface-dark border-r border-border-light dark:border-border-dark transition-all duration-300">
             <div className="flex flex-col gap-6 p-4">
                 <div className="flex items-center gap-3 px-2">
-                    <DevHubLogo size="md" showText={false} className="lg:hidden" />
-                    <DevHubLogo size="md" className="hidden lg:flex" />
+                    <LineaDeskLogo size="md" showText={false} className="lg:hidden" />
+                    <LineaDeskLogo size="md" className="hidden lg:flex" />
                 </div>
 
                 <nav className="flex flex-col gap-1">

@@ -58,11 +58,11 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
-    public ResponseEntity<ExceptionResponse<Void>> handleNoResourceFound(NoResourceFoundException ex) {
-        ExceptionResponse<Void> response = new ExceptionResponse<>("Resource not found: " + ex.getResourcePath());
+    public ResponseEntity<String> handleNoResourceFound(NoResourceFoundException ex) {
+        String path = ex.getResourcePath().replace("\"", "\\\"");
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(response);
+                .body("{\"success\":false,\"message\":\"Resource not found: " + path + "\",\"data\":null}");
     }
 
     @ExceptionHandler(HttpMediaTypeNotAcceptableException.class)

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-export const API_BASE = 'http://localhost:9000';
+export const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:9000';
 
 const api = axios.create({
     baseURL: API_BASE,
