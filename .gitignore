@@ -30,5 +30,4 @@ architecture/
 backend/notes/*
 backend/.idea
 dev_dashboard_design
-backend/src/main/resources/application.properties
 

@@ -3,7 +3,7 @@ WORKDIR /app
 COPY pom.xml .
 RUN mvn dependency:go-offline -B
 COPY src ./src
-RUN mvn package -DskipTests -B
+RUN MAVEN_OPTS="-XX:-TieredCompilation -XX:+UseSerialGC" mvn package -DskipTests -B
 
 FROM eclipse-temurin:21-jre
 WORKDIR /app
