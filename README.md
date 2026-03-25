@@ -20,6 +20,7 @@ A full-stack **Developer Productivity & Project Management Dashboard** that comb
 - [Tech Stack](#tech-stack)
 - [Features](#features)
 - [Project Structure](#project-structure)
+- [API Documentation (Swagger)](#api-documentation-swagger)
 - [API Endpoints](#api-endpoints)
 - [Authentication](#authentication)
 - [Architecture](#architecture)
@@ -118,9 +119,34 @@ docker compose up -d --build
 
 | Service  | URL                    |
 |----------|------------------------|
-| Frontend | http://localhost:3000   |
-| Backend  | http://localhost:9000   |
-| Database | localhost:3307          |
+| Frontend    | http://localhost:3000             |
+| Backend     | http://localhost:9000             |
+| Swagger UI  | http://localhost:9000/swagger-ui.html |
+| API Docs    | http://localhost:9000/v3/api-docs |
+| Database    | localhost:3307                    |
+
+---
+
+## API Documentation (Swagger)
+
+The backend includes interactive API documentation powered by **springdoc-openapi** (Swagger UI).
+
+### Accessing Swagger UI
+
+Once the project is running, open [http://localhost:9000/swagger-ui.html](http://localhost:9000/swagger-ui.html) in your browser to explore and test all available endpoints.
+
+### Authenticating in Swagger UI
+
+1. Log in via `/auth/login` to obtain a JWT token
+2. Click the **Authorize** button (🔒) at the top of the Swagger UI page
+3. Enter the token in the format: `Bearer <your-token>`
+4. Click **Authorize** — all subsequent requests will include the token
+
+### Raw API Docs
+
+| Format | URL                                       |
+|--------|-------------------------------------------|
+| JSON   | http://localhost:9000/v3/api-docs         |
 
 ---
 
