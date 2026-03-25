@@ -32,7 +32,7 @@ public class ProjectServices {
     }
 
     public ProjectResponseDto createNewProject(ProjectRequestDto req, User user) {
-        Optional<Project> existing = projectRepository.findByProjectName(req.getProjectName());
+        Optional<Project> existing = projectRepository.findByProjectNameAndUser(req.getProjectName(), user);
         if (existing.isPresent()) {
             throw new DuplicateResourceException("Project", "name", req.getProjectName());
         }
@@ -83,6 +83,9 @@ public class ProjectServices {
 
     @Transactional(readOnly = true)
     public Collection<ProjectResponseDto> getAllProjectsForUser(User user) {
+        if (user == null) {
+            throw new UnauthorizedAccessException();
+        }
         Collection<Project> owned = projectRepository.findAllByUserWithTasks(user);
         List<ProjectResponseDto> result = owned.stream()
                 .map(p -> new ProjectResponseDto(p, buildParticipants(p)))

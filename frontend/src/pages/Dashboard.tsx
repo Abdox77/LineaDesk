@@ -48,7 +48,7 @@ export function Dashboard() {
 
             <main className="flex-1 h-full overflow-y-auto overflow-x-hidden no-scrollbar relative">
                 <div className="max-w-6xl mx-auto px-6 py-8 md:px-10 lg:py-12 flex flex-col gap-8">
-                    <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                    <header className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
                         <div>
                             <h1 className="text-3xl font-bold text-[#111618] dark:text-white tracking-tight leading-tight">
                                 Welcome back, {displayName}
@@ -100,6 +100,7 @@ export function Dashboard() {
                             habits={habits}
                             loading={loading}
                             projects={projects}
+                            onCreateProject={() => setCreateModalOpen(true)}
                         />
                     </div>
                 </div>
@@ -219,9 +220,10 @@ interface DailyFocusProps {
     habits: HabitResponseDto[];
     loading: boolean;
     projects: ProjectResponseDto[];
+    onCreateProject: () => void;
 }
 
-function DailyFocusCard({ doneTasks, totalTasks, habits, loading, projects }: DailyFocusProps) {
+function DailyFocusCard({ doneTasks, totalTasks, habits, loading, projects, onCreateProject }: DailyFocusProps) {
     const navigate = useNavigate();
     const pct = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
     const circumference = 2 * Math.PI * 40;
@@ -318,15 +320,18 @@ function DailyFocusCard({ doneTasks, totalTasks, habits, loading, projects }: Da
             <div className="p-6 pt-0 mt-auto z-10">
                 <button
                     onClick={() => {
-                        const activeProject = projects.find(p => p.state === 'IN_PROGRESS') ?? projects[0];
-                        if (activeProject) {
-                            navigate(`/focus/${activeProject.projectId}`);
+                        if (projects.length === 0) {
+                            onCreateProject();
+                        } else {
+                            const activeProject = projects.find(p => p.state === 'IN_PROGRESS') ?? projects[0];
+                            if (activeProject) {
+                                navigate(`/focus/${activeProject.projectId}`);
+                            }
                         }
                     }}
-                    disabled={projects.length === 0}
-                    className="w-full py-3 px-4 bg-primary hover:bg-sky-600 text-white font-semibold rounded-lg shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full py-3 px-4 bg-primary hover:bg-sky-600 text-white font-semibold rounded-lg shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2"
                 >
-                    <span className="material-symbols-outlined text-[20px]">play_arrow</span>
+                    <span className="material-symbols-outlined text-[20px]">{projects.length === 0 ? 'add' : 'play_arrow'}</span>
                     {projects.length === 0 ? 'Create a Project First' : 'Start Focus Session'}
                 </button>
             </div>

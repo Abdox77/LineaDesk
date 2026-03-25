@@ -13,6 +13,8 @@ import com.linea_desk.rest_linea.User.User;
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, Long> {
         Optional<Project> findByProjectName(String projectName);
+
+        Optional<Project> findByProjectNameAndUser(String projectName, User user);
         
         @Query("SELECT p FROM Project p LEFT JOIN FETCH p.tasks WHERE p.user = :user")
         Collection<Project> findAllByUserWithTasks(@Param("user") User user);
