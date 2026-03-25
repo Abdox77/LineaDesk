@@ -16,12 +16,13 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 @Entity
-@Table(name="Projects")
+@Table(name="Projects", uniqueConstraints = @UniqueConstraint(columnNames = {"projectName", "user_id"}))
 public class Project {
     public enum PROJECT_STATE {
         PENDING,
@@ -33,7 +34,7 @@ public class Project {
     @GeneratedValue(strategy=GenerationType.AUTO)
     private Long id;
 
-    @Column(length=255, nullable=false, unique=true)
+    @Column(length=255, nullable=false)
     @NotNull(message="Project name cannot be Null")
     @NotBlank(message="Project name cannot be Blank")
     @Size(min = 3, message = "Project name must be at least be 3 characters long")
